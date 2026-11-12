@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import time
 import uuid
@@ -43,6 +44,93 @@ def route_template(scope: Scope) -> str:
         f"{{{by_value[segment.lower()]}}}" if segment.lower() in by_value else segment
         for segment in path.split("/")
     )
+
+
+class _BodyTooLarge(Exception):
+    pass
+
+
+class BodyLimitMiddleware:
+    """Recusa corpos maiores do que o limite, antes de a aplicação gastar memória ou disco.
+
+    Confere o ``Content-Length`` e, como ele pode faltar ou mentir, também conta os bytes que
+    chegam de fato.
+    """
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        default_limit: int,
+        upload_limit: int,
+        upload_paths: tuple[str, ...] = (),
+    ) -> None:
+        self.app = app
+        self.default_limit = default_limit
+        self.upload_limit = upload_limit
+        self.upload_paths = upload_paths
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or scope.get("method") in ("GET", "HEAD", "OPTIONS"):
+            await self.app(scope, receive, send)
+            return
+
+        path: str = scope.get("path", "")
+        limit = self.upload_limit if path.startswith(self.upload_paths) else self.default_limit
+        declared = Headers(scope=scope).get("content-length", "")
+        if declared.isdigit() and int(declared) > limit:
+            await self._reject(send, limit)
+            return
+
+        received = 0
+        started = False
+
+        async def limited_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > limit:
+                    raise _BodyTooLarge
+            return message
+
+        async def tracking_send(message: Message) -> None:
+            nonlocal started
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, limited_receive, tracking_send)
+        except _BodyTooLarge:
+            if started:
+                raise
+            await self._reject(send, limit)
+
+    @staticmethod
+    async def _reject(send: Send, limit: int) -> None:
+        megabytes = max(1, limit // (1024 * 1024))
+        body = json.dumps(
+            {
+                "error": {
+                    "code": "payload_too_large",
+                    "message": f"O envio passa do limite de {megabytes} MB.",
+                }
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 413,
+                "headers": [
+                    (b"content-type", b"application/json; charset=utf-8"),
+                    (b"content-length", str(len(body)).encode("ascii")),
+                    (b"connection", b"close"),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
 
 
 class RequestContextMiddleware:

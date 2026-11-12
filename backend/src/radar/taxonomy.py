@@ -167,6 +167,39 @@ class MessageKind(StrEnum):
     OUTRO = "outro"
 
 
+class ImportSource(StrEnum):
+    """Por onde a conversa entrou."""
+
+    WHATSAPP_EXPORT = "whatsapp_export"
+    API = "api"
+    WHATSAPP_CLOUD = "whatsapp_cloud"
+    EVOLUTION = "evolution"
+    DEMO = "demo"
+
+
+class ImportStatus(StrEnum):
+    PENDENTE = "pendente"
+    PROCESSANDO = "processando"
+    CONCLUIDO = "concluido"
+    FALHOU = "falhou"
+
+
+class ConversationStatus(StrEnum):
+    PENDENTE = "pendente"
+    PROCESSANDO = "processando"
+    ANALISADA = "analisada"
+    ERRO = "erro"
+
+
+class TranscriptionStatus(StrEnum):
+    NAO_APLICAVEL = "nao_aplicavel"
+    PENDENTE = "pendente"
+    CONCLUIDA = "concluida"
+    FALHOU = "falhou"
+    #: Áudio sem arquivo (export "sem mídia"), longo demais ou transcrição desligada.
+    IGNORADA = "ignorada"
+
+
 class AnalysisLayer(StrEnum):
     """Camada que produziu (ou avaliou) um achado."""
 

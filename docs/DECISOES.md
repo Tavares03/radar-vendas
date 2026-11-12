@@ -86,3 +86,35 @@ provedor suporta e reparo de JSON quando não.
 **Motivo:** menos dependências, comportamento idêntico entre provedores, e o failover vira uma
 lista ordenada. Limites medidos nos planos gratuitos (ex.: 8 mil tokens/min na Groq) viram
 configuração por provedor.
+
+## D14 — Ingestão idempotente por hash de mensagem
+**Decisão:** toda entrada (export, API, webhook) passa por `ingest_conversation`. Cada mensagem
+tem um hash (hora + autor + tipo + texto + ordem de ocorrência). Reenviar o mesmo arquivo devolve
+a importação original; um export mais novo da mesma conversa só acrescenta o que falta.
+**Detalhe importante:** dois exports só são tratados como a mesma conversa se tiverem os mesmos
+participantes **e** pelo menos uma mensagem em comum. Só o nome não basta: dois clientes
+"Maria" do mesmo vendedor não podem ser fundidos.
+
+## D15 — Do zip, só o áudio vai para o disco
+**Decisão:** fotos, vídeos e documentos do export não são extraídos nem guardados; só os áudios,
+porque precisam ser transcritos — e eles são apagados pela política de retenção de mídia.
+O arquivo enviado é removido assim que é processado.
+**Motivo:** minimização (LGPD) e menos superfície de ataque: nada do zip é gravado com o nome
+que veio nele.
+
+## D16 — Áudio decodificado com PyAV, fora do faster-whisper
+**Decisão:** o projeto decodifica o áudio (PyAV → mono 16 kHz) e entrega o vetor ao modelo.
+**Motivo:** não exige ffmpeg instalado, permite recusar áudios longos antes de carregá-los
+inteiros e não depende da função de decodificação interna do faster-whisper, que quebrou com
+uma versão mais nova do PyAV durante o desenvolvimento.
+
+## D17 — Datas ambíguas do export nunca são resolvidas em silêncio
+**Decisão:** a ordem dia/mês é inferida pelo arquivo inteiro (valores acima de 12, inversões de
+ordem cronológica, amplitude do período). Se continuar ambígua, vale dia/mês (ou mês/dia quando o
+arquivo usa AM/PM) e a conversa recebe um aviso visível.
+
+## D18 — Texto sem máscara não aparece
+**Decisão:** a API devolve o texto mascarado. Antes de a etapa de privacidade rodar, a mensagem
+vem com `text_available: false` em vez do texto original. O original (e o áudio) só sai com
+`reveal=true`, para papéis autorizados pela empresa, e cada acesso fica na trilha de auditoria.
+Tokens de API nunca recebem dado pessoal em claro.

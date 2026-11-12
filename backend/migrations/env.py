@@ -13,7 +13,7 @@ from typing import Any, Literal
 from alembic import context
 from alembic.autogenerate.api import AutogenContext
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import engine_from_config, pool, text
+from sqlalchemy import Text, engine_from_config, pool, text
 
 from radar.config import get_settings
 from radar.db import models  # noqa: F401  (registra as tabelas)
@@ -43,6 +43,19 @@ def render_item(type_: str, obj: Any, autogen_context: AutogenContext) -> str | 
     return False
 
 
+def compare_type(
+    _context: Any,
+    _inspected_column: Any,
+    _metadata_column: Any,
+    inspected_type: Any,
+    metadata_type: Any,
+) -> bool | None:
+    """``EncryptedText`` é ``TEXT`` no banco: não é diferença de esquema."""
+    if isinstance(metadata_type, EncryptedText):
+        return not isinstance(inspected_type, Text)
+    return None  # demais tipos: comparação padrão do Alembic
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=config.get_main_option("sqlalchemy.url"),
@@ -50,7 +63,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         render_item=render_item,
-        compare_type=True,
+        compare_type=compare_type,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -71,7 +84,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             render_item=render_item,
-            compare_type=True,
+            compare_type=compare_type,
             render_as_batch=connection.dialect.name == "sqlite",
         )
         with context.begin_transaction():

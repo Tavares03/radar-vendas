@@ -46,7 +46,8 @@ from radar.db.models import Seller, Tenant  # noqa: E402
 from radar.db.session import get_engine, new_session  # noqa: E402
 from radar.services.accounts import create_tenant, create_user  # noqa: E402
 from radar.taxonomy import Role  # noqa: E402
-from radar.testing import PASSWORD, Account, AccountFactory  # noqa: E402
+from radar.testing import PASSWORD, Account, AccountFactory, FakeTranscriber  # noqa: E402
+from radar.transcription import set_transcriber  # noqa: E402
 
 IS_POSTGRES = not get_settings().is_sqlite
 
@@ -55,7 +56,13 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     skip_pg = pytest.mark.skip(reason="exige PostgreSQL (defina RADAR_TEST_DATABASE_URL)")
     skip_net = pytest.mark.skip(reason="exige internet e chaves reais (RADAR_RUN_NETWORK_TESTS=1)")
     run_network = os.environ.get("RADAR_RUN_NETWORK_TESTS") == "1"
+    skip_slow = pytest.mark.skip(
+        reason="lento: baixa e roda modelos reais (RADAR_RUN_SLOW_TESTS=1)"
+    )
+    run_slow = os.environ.get("RADAR_RUN_SLOW_TESTS") == "1"
     for item in items:
+        if "slow" in item.keywords and not run_slow:
+            item.add_marker(skip_slow)
         if "postgres" in item.keywords and not IS_POSTGRES:
             item.add_marker(skip_pg)
         if "network" in item.keywords and not run_network:
@@ -92,6 +99,15 @@ def _clean_state() -> None:
     reset = getattr(limiter, "reset", None)
     if callable(reset):
         reset()
+
+
+@pytest.fixture
+def fake_transcriber() -> Iterator[FakeTranscriber]:
+    """Liga a transcrição com um transcritor de mentira durante o teste."""
+    fake = FakeTranscriber()
+    set_transcriber(fake)
+    yield fake
+    set_transcriber(None, clear=True)
 
 
 @pytest.fixture

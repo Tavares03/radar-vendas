@@ -41,6 +41,8 @@ dependencies = [
     "tokenizers>=0.21",
     "huggingface-hub>=0.27",
     "faster-whisper>=1.1",
+    "av>=13.0",
+    "tzdata>=2024.2",
 ]
 
 [project.scripts]

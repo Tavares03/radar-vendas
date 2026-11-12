@@ -77,6 +77,26 @@ docker compose exec api radar create-tenant "Minha Empresa"
 docker compose exec api radar create-user minha-empresa voce@empresa.com.br --name "Você"
 ```
 
+### Enviando conversas
+
+No WhatsApp, abra a conversa → **Mais** → **Exportar conversa** (com ou sem mídia). Envie o
+`.zip` ou o `.txt` pelo painel, ou pela API:
+
+```bash
+# um ou vários arquivos de uma vez
+curl -X POST http://localhost:3000/api/v1/imports \
+  -H "Authorization: Bearer $RADAR_TOKEN" \
+  -F "files=@Conversa do WhatsApp com Cliente.zip"
+```
+
+O Radar reconhece exports de Android e iPhone, em português e inglês; transcreve os áudios
+localmente (faster-whisper); identifica quem é o vendedor pelo cadastro, pelo título do export
+ou pelo conteúdo — e avisa quando ficou em dúvida. Reenviar o mesmo arquivo não duplica nada, e
+um export mais novo da mesma conversa só acrescenta as mensagens que faltam.
+
+Sistemas próprios (CRM, N8N) podem mandar conversas em JSON para `POST /api/v1/conversations`.
+Os tokens de integração são criados em `POST /api/v1/api-tokens`.
+
 ### Chaves de LLM (opcionais e gratuitas)
 
 Sem nenhuma chave o sistema funciona com regras + classificador. Para resumo, sugestões e

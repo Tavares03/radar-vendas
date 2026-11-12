@@ -1262,6 +1262,7 @@ source = { editable = "backend" }
 dependencies = [
     { name = "alembic" },
     { name = "argon2-cffi" },
+    { name = "av" },
     { name = "cryptography" },
     { name = "email-validator" },
     { name = "fastapi" },
@@ -1286,6 +1287,7 @@ dependencies = [
     { name = "structlog" },
     { name = "tokenizers" },
     { name = "typer" },
+    { name = "tzdata" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -1293,6 +1295,7 @@ dependencies = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.14" },
     { name = "argon2-cffi", specifier = ">=23.1" },
+    { name = "av", specifier = ">=13.0" },
     { name = "cryptography", specifier = ">=44.0" },
     { name = "email-validator", specifier = ">=2.2" },
     { name = "fastapi", specifier = ">=0.115" },
@@ -1317,6 +1320,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.4" },
     { name = "tokenizers", specifier = ">=0.21" },
     { name = "typer", specifier = ">=0.15" },
+    { name = "tzdata", specifier = ">=2024.2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
 ]
 

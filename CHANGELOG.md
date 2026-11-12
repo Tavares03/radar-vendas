@@ -16,3 +16,15 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   logs estruturados com `request_id`.
 - CLI `radar` (criar empresa e usuário, bootstrap, worker, agendador).
 - CI no GitHub Actions: lint, tipos, testes em SQLite e PostgreSQL, migrations e imagens Docker.
+- Ingestão: parser do export do WhatsApp (Android e iOS, PT-BR e EN, mensagens multilinha, mídia
+  omitida, anexos, mensagens apagadas e editadas, avisos de sistema) com inferência da ordem
+  dia/mês pelo arquivo inteiro.
+- Abertura segura de zips (zip bomb, path traversal, links simbólicos, senha, limites de tamanho)
+  e limite de corpo por requisição.
+- Identificação de vendedor e cliente pelo cadastro, pelo título do export ou pelo conteúdo, com
+  nível de confiança e correção pelo painel.
+- `POST /api/v1/imports` (upload único ou em lote) e `POST /api/v1/conversations` (JSON), ambos
+  idempotentes; listagem, leitura, correção, reprocessamento e exclusão de conversas.
+- Transcrição local de áudios com faster-whisper (`.opus`, `.ogg`, `.m4a`, `.mp3`).
+- Texto bruto, nome do cliente e nome do arquivo cifrados em repouso; leitura mascarada por
+  padrão e "revelar" auditado.
