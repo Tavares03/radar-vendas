@@ -1,0 +1,113 @@
+[project]
+name = "radar-vendas-workspace"
+version = "0.1.0"
+description = "Workspace do Radar de Vendas: supervisor de vendas com IA para equipes que vendem pelo WhatsApp."
+requires-python = ">=3.12,<3.14"
+dependencies = ["radar-vendas", "radar-synthetic", "radar-evals"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["backend", "synthetic", "evals", "training"]
+
+[tool.uv.sources]
+radar-vendas = { workspace = true }
+radar-synthetic = { workspace = true }
+radar-evals = { workspace = true }
+radar-training = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-pyyaml>=6.0",
+    "types-reportlab>=4.2",
+]
+# Treino dos modelos (PyTorch, Transformers…). Pesado: `uv sync --group train`.
+train = ["radar-training"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["backend/src", "synthetic/src", "evals/src", "training/src"]
+extend-exclude = ["backend/migrations/versions", "frontend", "data", "models"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",  # pycodestyle / pyflakes
+    "I",            # isort
+    "UP",           # pyupgrade
+    "B",            # bugbear
+    "SIM",          # simplify
+    "C4",           # comprehensions
+    "PT",           # pytest style
+    "S",            # segurança (bandit)
+    "T20",          # sem print() em código de produção
+    "RUF",
+]
+ignore = [
+    "RUF001", "RUF002", "RUF003",  # textos em PT-BR e fixtures usam caracteres "ambíguos" de propósito
+    "S101",                        # assert é permitido (tipagem e testes)
+    "B008",                        # Depends() em default de argumento é o idioma do FastAPI
+    "E501",                        # comprimento de linha fica a cargo do formatador
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106", "S108", "S311", "T20"]
+"synthetic/**" = ["S311"]          # random aqui é para gerar dados falsos, não para criptografia
+"training/**" = ["S311", "T20"]
+"evals/**" = ["T20"]
+"scripts/**" = ["T20", "S311"]
+"space/**" = ["T20"]
+"**/cli.py" = ["T20"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["radar", "radar_synth", "radar_evals", "radar_training"]
+
+# ---------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+mypy_path = ["backend/src", "synthetic/src", "evals/src"]
+explicit_package_bases = true
+namespace_packages = true
+exclude = ["backend/migrations/", "frontend/", "training/", "space/", "scripts/"]
+
+[[tool.mypy.overrides]]
+module = [
+    "rq.*", "pgvector.*", "faster_whisper.*", "onnxruntime.*", "reportlab.*",
+    "huggingface_hub.*", "tokenizers.*", "av.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-markers --import-mode=importlib"
+testpaths = ["backend/tests", "synthetic/tests", "evals/tests"]
+markers = [
+    "postgres: exige PostgreSQL com pgvector (RADAR_TEST_DATABASE_URL)",
+    "slow: testes lentos (modelos reais, áudio)",
+    "network: exige internet e chaves de API reais",
+]
+filterwarnings = ["error::DeprecationWarning:radar.*"]
+
+[tool.coverage.run]
+source = ["radar", "radar_synth", "radar_evals"]
+branch = true
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError", "\\.\\.\\."]

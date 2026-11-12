@@ -1,0 +1,68 @@
+# ---- Segredos (NUNCA versionar) ----
+.env
+.env.*
+!.env.example
+apis.txt
+*.pem
+*.key
+
+# ---- Documento de briefing local (não faz parte do produto) ----
+PROMPT-radar-de-vendas.md
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.egg-info/
+dist/
+build/
+
+# ---- Node ----
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+
+# ---- Dados e modelos gerados (grandes; reproduzíveis por script) ----
+/data/generated/
+/data/uploads/
+/data/media/
+/data/cache/
+/models/
+/training/runs/
+/training/outputs/
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+!frontend/public/**
+
+# ---- Bancos locais ----
+*.db
+*.sqlite
+*.sqlite3
+
+# ---- SO / editores ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ---- Logs / temporários ----
+*.log
+tmp/
+.tmp/

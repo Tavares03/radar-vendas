@@ -1,0 +1,38 @@
+# Segredos e arquivos locais
+.env
+.env.*
+!.env.example
+apis.txt
+PROMPT-radar-de-vendas.md
+
+# Controle de versão e editores
+.git
+.github
+.vscode
+.idea
+
+# Ambientes e caches
+**/.venv
+**/__pycache__
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+**/node_modules
+**/.next
+**/coverage
+htmlcov
+.coverage
+
+# Dados e modelos gerados (entram por volume, não pela imagem)
+data/generated
+data/uploads
+data/media
+data/cache
+models
+training/runs
+training/outputs
+**/*.db
+
+# Não fazem parte das imagens
+docs
+**/tests

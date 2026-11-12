@@ -1,0 +1,34 @@
+name: Ideia ou melhoria
+description: Sugira uma funcionalidade, um playbook de setor ou um caso que o sistema erra
+labels: ["melhoria"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Não cole conversas reais.** Exemplos devem ser inventados ou gerados pelo módulo `synthetic/`.
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema isso resolve?
+      description: Quem sente esse problema e em que situação.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: O que você propõe?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Importação / parser do WhatsApp
+        - Privacidade / LGPD
+        - Análise (regras, classificador, LLM)
+        - Playbook de setor
+        - Painel
+        - Integrações
+        - Modelos e dataset
+        - Documentação

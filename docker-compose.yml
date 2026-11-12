@@ -1,0 +1,206 @@
+# Radar de Vendas — sobe tudo com um comando:
+#
+#   docker compose up --build
+#
+# Painel: http://localhost:3000   (login da demo no README)
+# API:    http://localhost:3000/api/docs
+#
+# Funciona sem .env (valores de desenvolvimento). Para produção, copie .env.example para .env
+# e defina pelo menos RADAR_SECRET_KEY e POSTGRES_PASSWORD.
+#
+# Perfis opcionais:
+#   --profile local   Ollama: LLM 100% local, nada sai da máquina
+#   --profile mail    Mailpit: caixa de e-mail de teste em http://localhost:8025
+#   --profile n8n     N8N: automações em http://localhost:5678
+
+name: radar-vendas
+
+x-backend: &backend
+  # A imagem é construída uma vez, pelo serviço `migrate`, e reutilizada pelos demais.
+  image: radar-vendas-backend:local
+  pull_policy: never
+  restart: unless-stopped
+  environment: &backend-env
+    RADAR_ENVIRONMENT: ${RADAR_ENVIRONMENT:-dev}
+    RADAR_SECRET_KEY: ${RADAR_SECRET_KEY:-dev-inseguro-troque-por-um-segredo-de-32-bytes-ou-mais}
+    RADAR_DATABASE_URL: postgresql+psycopg://radar:${POSTGRES_PASSWORD:-radar}@db:5432/radar
+    RADAR_REDIS_URL: redis://valkey:6379/0
+    RADAR_QUEUE_MODE: rq
+    RADAR_PUBLIC_BASE_URL: ${RADAR_PUBLIC_BASE_URL:-http://localhost:3000}
+    RADAR_COOKIE_SECURE: ${RADAR_COOKIE_SECURE:-false}
+    RADAR_LOG_LEVEL: ${RADAR_LOG_LEVEL:-INFO}
+    RADAR_ALLOW_SIGNUP: ${RADAR_ALLOW_SIGNUP:-false}
+    RADAR_METRICS_TOKEN: ${RADAR_METRICS_TOKEN:-}
+    # Primeiro uso
+    RADAR_SEED_DEMO: ${RADAR_SEED_DEMO:-true}
+    RADAR_BOOTSTRAP_TENANT_NAME: ${RADAR_BOOTSTRAP_TENANT_NAME:-}
+    RADAR_BOOTSTRAP_ADMIN_EMAIL: ${RADAR_BOOTSTRAP_ADMIN_EMAIL:-}
+    RADAR_BOOTSTRAP_ADMIN_PASSWORD: ${RADAR_BOOTSTRAP_ADMIN_PASSWORD:-}
+    # LLM (todas opcionais: sem chave, a análise roda com regras + classificador)
+    RADAR_LLM_MODE: ${RADAR_LLM_MODE:-cloud}
+    RADAR_LLM_PROVIDERS: ${RADAR_LLM_PROVIDERS:-groq,gemini,openrouter,ollama}
+    GROQ_API_KEY: ${GROQ_API_KEY:-}
+    RADAR_GROQ_MODEL: ${RADAR_GROQ_MODEL:-openai/gpt-oss-120b}
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    RADAR_GEMINI_MODEL: ${RADAR_GEMINI_MODEL:-gemini-flash-lite-latest}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    RADAR_OPENROUTER_MODEL: ${RADAR_OPENROUTER_MODEL:-google/gemma-4-31b-it:free}
+    RADAR_OLLAMA_BASE_URL: ${RADAR_OLLAMA_BASE_URL:-}
+    RADAR_OLLAMA_MODEL: ${RADAR_OLLAMA_MODEL:-qwen3:4b}
+    # Transcrição e modelos próprios
+    RADAR_TRANSCRIPTION_ENABLED: ${RADAR_TRANSCRIPTION_ENABLED:-true}
+    RADAR_WHISPER_MODEL: ${RADAR_WHISPER_MODEL:-small}
+    RADAR_NER_MODEL: ${RADAR_NER_MODEL:-auto}
+    RADAR_CLASSIFIER_MODEL: ${RADAR_CLASSIFIER_MODEL:-auto}
+    RADAR_EMBEDDING_MODEL: ${RADAR_EMBEDDING_MODEL:-auto}
+    RADAR_NER_HUB_ID: ${RADAR_NER_HUB_ID:-}
+    RADAR_CLASSIFIER_HUB_ID: ${RADAR_CLASSIFIER_HUB_ID:-}
+    HF_TOKEN: ${HF_TOKEN:-}
+    # Alertas
+    RADAR_SMTP_HOST: ${RADAR_SMTP_HOST:-}
+    RADAR_SMTP_PORT: ${RADAR_SMTP_PORT:-587}
+    RADAR_SMTP_USER: ${RADAR_SMTP_USER:-}
+    RADAR_SMTP_PASSWORD: ${RADAR_SMTP_PASSWORD:-}
+    RADAR_SMTP_FROM: ${RADAR_SMTP_FROM:-Radar de Vendas <radar@localhost>}
+    RADAR_SMTP_STARTTLS: ${RADAR_SMTP_STARTTLS:-true}
+    RADAR_TELEGRAM_BOT_TOKEN: ${RADAR_TELEGRAM_BOT_TOKEN:-}
+    RADAR_WEBHOOK_ALLOW_PRIVATE_HOSTS: ${RADAR_WEBHOOK_ALLOW_PRIVATE_HOSTS:-false}
+  volumes:
+    - radar-data:/data
+    - hf-cache:/cache/hf
+    # Modelos próprios treinados localmente (opcional). Veja docs/TREINAMENTO.md.
+    - ./models:/models:ro
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-radar}
+      POSTGRES_DB: radar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Só na máquina local, para desenvolvimento. A porta 5433 evita conflito com outro Postgres.
+      - "127.0.0.1:${RADAR_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d radar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - valkey-data:/data
+    ports:
+      - "127.0.0.1:${RADAR_VALKEY_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    pull_policy: build
+    restart: "no"
+    working_dir: /app/backend
+    command: ["sh", "-c", "alembic upgrade head && radar bootstrap"]
+    healthcheck:
+      disable: true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      # A API só é alcançada pela rede interna do Compose (via painel) ou por 127.0.0.1.
+      FORWARDED_ALLOW_IPS: "*"
+    ports:
+      - "127.0.0.1:${RADAR_API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+
+  worker:
+    <<: *backend
+    command: ["radar", "worker"]
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+
+  scheduler:
+    <<: *backend
+    command: ["radar", "scheduler"]
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+
+  frontend:
+    image: radar-vendas-frontend:local
+    build:
+      context: frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://api:8000
+    ports:
+      - "${RADAR_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------- perfis opcionais
+  ollama:
+    profiles: ["local"]
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "127.0.0.1:${RADAR_OLLAMA_PORT:-11434}:11434"
+
+  mailpit:
+    profiles: ["mail"]
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  n8n:
+    profiles: ["n8n"]
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: America/Sao_Paulo
+    volumes:
+      - n8n-data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+
+volumes:
+  pgdata:
+  valkey-data:
+  radar-data:
+  hf-cache:
+  ollama:
+  n8n-data:
