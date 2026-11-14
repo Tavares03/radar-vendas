@@ -17,7 +17,7 @@ from radar.auth.passwords import (
     needs_rehash,
     verify_password,
 )
-from radar.config import Settings
+from radar.config import Settings, get_settings
 from radar.db.models import Seller, Tenant, User
 from radar.logs import get_logger
 from radar.taxonomy import Role
@@ -55,7 +55,13 @@ def create_tenant(
         slug = f"{base}-{suffix}"
         suffix += 1
     tenant = Tenant(name=name.strip(), slug=slug, default_playbook=default_playbook)
-    tenant.set_settings(settings or TenantSettings())
+    if settings is None:
+        installation = get_settings()
+        settings = TenantSettings(
+            retention_raw_days=installation.default_retention_raw_days,
+            retention_media_days=installation.default_retention_media_days,
+        )
+    tenant.set_settings(settings)
     db.add(tenant)
     db.flush()
     return tenant

@@ -49,3 +49,12 @@ def enqueue_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> No
 def heartbeat() -> None:
     """Prova de vida do conjunto agendador → fila → worker."""
     log.info("heartbeat")
+
+
+@periodic("retencao", every=timedelta(hours=6))
+def retention() -> None:
+    """Aplica a política de retenção de todas as empresas (LGPD)."""
+    from radar.config import get_settings
+    from radar.services.retention import run_retention_all
+
+    run_retention_all(get_settings())

@@ -289,7 +289,7 @@ Cada fase lista entregas, interfaces que as fases seguintes consomem e como é v
 |---|---|---|
 | 1 Fundação | concluída | 65 testes (SQLite e PostgreSQL), `docker compose up` validado de ponta a ponta |
 | 2 Ingestão | concluída | 186 testes; `.opus` real transcrito de ponta a ponta com faster-whisper |
-| 3 Privacidade | em andamento | |
+| 3 Privacidade | concluída | 358 testes (SQLite) e 357 (PostgreSQL); NER entra na fase 7 pelo `PiiDetector` |
 | 4 Dados sintéticos | pendente | |
 | 5 Análise v1 | pendente | |
 | 6 Painel | pendente | |

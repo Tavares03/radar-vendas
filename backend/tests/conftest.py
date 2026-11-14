@@ -91,10 +91,10 @@ def _clean_state() -> None:
             if tables:
                 conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
         else:
-            conn.execute(text("PRAGMA foreign_keys=OFF"))
+            # Ordem reversa de dependência: filhos antes dos pais, sem desligar as chaves
+            # estrangeiras (um PRAGMA dentro da transação seria ignorado e o CASCADE sumiria).
             for table in reversed(Base.metadata.sorted_tables):
                 conn.execute(table.delete())
-            conn.execute(text("PRAGMA foreign_keys=ON"))
     limiter = get_rate_limiter()
     reset = getattr(limiter, "reset", None)
     if callable(reset):

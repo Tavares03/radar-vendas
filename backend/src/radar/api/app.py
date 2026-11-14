@@ -21,6 +21,7 @@ from radar.api.routers import (
     conversations,
     health,
     imports,
+    privacy,
     sellers,
     tenant,
     users,
@@ -53,6 +54,10 @@ TAGS = [
     {"name": "vendedores", "description": "Cadastro de vendedores."},
     {"name": "importação", "description": "Envio de conversas exportadas do WhatsApp."},
     {"name": "conversas", "description": "Conversas, mensagens e envio por API."},
+    {
+        "name": "privacidade",
+        "description": "LGPD: localizar, exportar e excluir dados de um titular; retenção.",
+    },
     {"name": "integrações", "description": "Tokens de API, webhooks e canais de alerta."},
     {"name": "auditoria", "description": "Trilha de auditoria."},
 ]
@@ -117,7 +122,17 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/api")
 
     v1 = APIRouter(prefix="/api/v1")
-    for module in (auth, tenant, users, sellers, imports, conversations, api_tokens, audit):
+    for module in (
+        auth,
+        tenant,
+        users,
+        sellers,
+        imports,
+        conversations,
+        privacy,
+        api_tokens,
+        audit,
+    ):
         v1.include_router(module.router)
     app.include_router(v1)
     return app

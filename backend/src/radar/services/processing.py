@@ -21,6 +21,7 @@ from radar.db.session import session_scope
 from radar.logs import get_logger
 from radar.observability import PIPELINE_STAGE_DURATION
 from radar.services.ingestion import data_path
+from radar.services.privacy import privacy_stage
 from radar.taxonomy import ConversationStatus, TranscriptionStatus
 from radar.transcription import AudioTooLong, TranscriptionError, get_transcriber
 
@@ -68,7 +69,10 @@ def transcribe_stage(db: Session, conversation: Conversation, settings: Settings
 
 
 #: Etapas do pipeline, na ordem. Os módulos de cada fase acrescentam as suas com `register_stage`.
-STAGES: list[tuple[str, Stage]] = [("transcricao", transcribe_stage)]
+STAGES: list[tuple[str, Stage]] = [
+    ("transcricao", transcribe_stage),
+    ("privacidade", privacy_stage),
+]
 
 
 def register_stage(name: str, stage: Stage, *, before: str | None = None) -> None:

@@ -153,10 +153,27 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 
 - [Plano e status](docs/PLANO.md)
 - [Registro de decisões](docs/DECISOES.md)
+- [LGPD e privacidade](docs/LGPD.md)
 - [Como contribuir](CONTRIBUTING.md)
 - [Política de segurança](SECURITY.md)
 
-## Privacidade
+## Privacidade (LGPD)
+
+- **Máscara antes de tudo:** CPF, CNPJ, RG, telefone, e-mail, endereço, CEP, PIX, conta e
+  cartão, placa e nomes viram `[CPF]`, `[TELEFONE]`… antes de qualquer análise. O painel mostra o
+  texto mascarado; o original fica cifrado e só aparece com "revelar", auditado.
+- **Retenção configurável:** texto original e áudios são apagados depois de X dias (padrão: 90 e
+  30), pelo agendador ou por `radar retention-run`.
+- **Direitos do titular:** localizar, exportar (JSON) e excluir os dados de uma pessoa pelo nome,
+  telefone, CPF ou e-mail — sem que o banco guarde esses identificadores em claro.
+
+```bash
+curl -X POST http://localhost:3000/api/v1/privacy/subjects/search \
+  -H "Authorization: Bearer $RADAR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"identifiers": ["529.982.247-25"]}'
+```
+
+Detalhes, bases legais e um checklist para quem vai usar: [docs/LGPD.md](docs/LGPD.md).
 
 Todos os dados de exemplo, teste e treino deste repositório são **sintéticos**. Não envie
 conversas reais em issues ou pull requests.

@@ -28,3 +28,17 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Transcrição local de áudios com faster-whisper (`.opus`, `.ogg`, `.m4a`, `.mp3`).
 - Texto bruto, nome do cliente e nome do arquivo cifrados em repouso; leitura mascarada por
   padrão e "revelar" auditado.
+- Privacidade: detecção de dados pessoais em PT-BR (CPF, CNPJ alfanumérico, RG, telefone,
+  e-mail, endereço, CEP, PIX, conta bancária e cartão, placa, nomes) por regex, validadores e
+  contexto, mais os nomes dos participantes do export; detector em camadas pronto para o NER.
+- Etapa de privacidade no pipeline: toda mensagem (inclusive áudio transcrito) é mascarada antes
+  de qualquer análise; trava `ensure_masked` para texto que sai da máquina.
+- Índice de titulares por HMAC e `POST /api/v1/privacy/subjects/search|export|delete` para
+  atender os direitos de acesso, portabilidade e eliminação (LGPD, art. 18).
+- Política de retenção por empresa (texto original, áudios, conversas inteiras): agendador a
+  cada 6 horas, `radar retention-run [--dry-run]` e `GET|POST /api/v1/privacy/retention`.
+- `docs/LGPD.md`: bases legais, dados guardados, mascaramento, retenção, direitos do titular,
+  controle de acesso e checklist para quem vai usar.
+
+### Corrigido
+- Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).

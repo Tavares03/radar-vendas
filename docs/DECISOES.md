@@ -118,3 +118,49 @@ arquivo usa AM/PM) e a conversa recebe um aviso visível.
 vem com `text_available: false` em vez do texto original. O original (e o áudio) só sai com
 `reveal=true`, para papéis autorizados pela empresa, e cada acesso fica na trilha de auditoria.
 Tokens de API nunca recebem dado pessoal em claro.
+
+## D19 — Detecção de dados pessoais em camadas, mascarando na dúvida
+**Decisão:** regex + validadores + contexto → nomes dos participantes do export → NER próprio
+(fase 7). Trechos sobrepostos viram um só (a união), e vence o mais longo; no empate, o tipo mais
+específico (CPF antes de RG, por exemplo).
+**Regra de desempate entre precisão e cobertura:** número *formatado* como CPF, CNPJ ou telefone
+é mascarado mesmo com dígito verificador errado (erro de digitação continua sendo dado pessoal);
+número *sem formatação* só é mascarado se passar no validador ou se o contexto disser o que ele é.
+**Motivo:** o custo de vazar um CPF é muito maior que o de esconder um número inofensivo; mas
+mascarar todo número corrido destruiria valores, prazos e protocolos que a análise precisa ler.
+
+## D20 — Marcadores com o nome do tipo (`[CPF]`, `[NOME_PESSOA]`)
+**Alternativas:** pseudônimos numerados (`[NOME_1]`); dados falsos no lugar (substituição).
+**Motivo:** inequívoco para o LLM e para quem lê, igual à taxonomia do NER e do dataset, e não
+cria a ilusão de um dado real. Os trechos (`pii_spans`) apontam para os marcadores no texto
+mascarado, e o painel estiliza a partir deles.
+
+## D21 — Índice de titulares por HMAC (`pii_index`)
+**Decisão:** cada identificador encontrado (e cada cliente participante) vira uma linha com o
+HMAC-SHA256 por empresa, o tipo e a conversa/mensagem. Localizar, exportar e excluir os dados de
+um titular é uma busca pelo HMAC dos identificadores informados.
+**Alternativas:** busca por texto no original cifrado (impossível sem decifrar tudo); guardar
+os identificadores em claro (contradiz a minimização).
+**Detalhe:** a relação com a conversa é `participante` (é o cliente) ou `mencionado` (um dado
+dele aparece na conversa de outra pessoa). Na exclusão, a conversa do participante some
+inteira; na conversa de terceiro, só o texto original das mensagens que o mencionam.
+
+## D22 — Retenção contada a partir do recebimento, mascarando antes de apagar
+**Decisão:** os prazos contam de `created_at` (quando o Radar recebeu o dado), não da data da
+mensagem. Mensagem sem máscara é mascarada antes de perder o original. Nomes dos participantes
+(cifrados) ficam até a retenção da conversa ou o pedido do titular.
+**Motivo:** importar um export de dois anos atrás não pode apagar o original no mesmo instante;
+e nenhuma mensagem pode virar um buraco sem texto por causa da ordem das etapas.
+
+## D23 — Trava de saída (`ensure_masked`)
+**Decisão:** todo texto que vai sair da máquina (LLM em nuvem, webhooks) passa de novo pela
+detecção estruturada; se ainda tiver CPF, telefone, e-mail etc., o envio é recusado e o erro só
+cita os tipos.
+**Motivo:** defesa em profundidade contra um bug que mande `text_raw` no lugar de `text_masked`.
+
+## D24 — Testes em SQLite com chaves estrangeiras ligadas
+**Decisão:** a limpeza entre testes apaga as tabelas em ordem reversa de dependência, sem
+desligar as chaves estrangeiras.
+**Motivo:** o `PRAGMA foreign_keys=ON` executado dentro da transação era ignorado pelo SQLite, e
+o `ON DELETE CASCADE` deixava de valer nos testes — um teste podia passar no SQLite e falhar no
+PostgreSQL. Um teste garante que as chaves continuam ligadas.

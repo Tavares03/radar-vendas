@@ -87,6 +87,30 @@ def create_user_cmd(
         typer.echo(f"Usuário criado: {user.email} ({user.role.value}) em {tenant.name}")
 
 
+@app.command("retention-run")
+def retention_run(
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Só mostra o que seria apagado")
+    ] = False,
+) -> None:
+    """Aplica a política de retenção (LGPD) de todas as empresas agora."""
+    from radar.services.retention import run_retention_all
+
+    settings = get_settings()
+    reports = run_retention_all(settings, dry_run=dry_run)
+    with session_scope() as db:
+        names = {tenant.id: tenant.name for tenant in db.scalars(select(Tenant))}
+    if dry_run:
+        typer.echo("Simulação: nada foi apagado.")
+    for report in reports:
+        typer.echo(
+            f"{names.get(report.tenant_id, report.tenant_id)}: "
+            f"{report.raw_messages_purged} mensagem(ns) com texto original, "
+            f"{report.media_files_deleted} áudio(s), "
+            f"{report.conversations_deleted} conversa(s)"
+        )
+
+
 @app.command()
 def bootstrap() -> None:
     """Prepara o primeiro uso: pastas, admin inicial (se configurado no .env) e dados da demo."""
