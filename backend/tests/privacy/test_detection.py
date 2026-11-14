@@ -57,6 +57,9 @@ def test_numero_qualquer_de_onze_digitos_nao_e_mascarado():
         ("cnpj 11222333000181", [("CNPJ", "11222333000181")]),
         ("empresa 12.ABC.345/01DE-35", [("CNPJ", "12.ABC.345/01DE-35")]),
         ("o 11.222.333/0001-80 tá certo?", [("CNPJ", "11.222.333/0001-80")]),
+        # Alfanumérico sem formatação: só com o contexto dizendo que é CNPJ.
+        ("Emite a nota no CNPJ ABCDEFGHJKLM50", [("CNPJ", "ABCDEFGHJKLM50")]),
+        ("código ABCDEFGHJKLM50", []),
     ],
 )
 def test_cnpj(text: str, expected: list[tuple[str, str]]):
@@ -142,6 +145,7 @@ def test_pix_chave_aleatoria():
         ("faz um pix pra vendas@exemplo.com", "vendas@exemplo.com"),
         ("meu pix é (11) 91234-5678", "(11) 91234-5678"),
         ("PIX 11.222.333/0001-81", "11.222.333/0001-81"),
+        ("Pode fazer o pix direto pra mim que eu repasso: (11) 91234-5678", "(11) 91234-5678"),
     ],
 )
 def test_documento_usado_como_chave_pix(text: str, value: str):
@@ -204,6 +208,7 @@ def test_placa(text: str, expected: list[tuple[str, str]]):
         ("Av. Paulista 1000 apto 52", [("ENDERECO", "Av. Paulista 1000 apto 52")]),
         ("rua augusta nº 500 bloco B", [("ENDERECO", "rua augusta nº 500 bloco B")]),
         ("Alameda Santos, n. 45, casa 2", [("ENDERECO", "Alameda Santos, n. 45, casa 2")]),
+        ("Endereço: Rua Tiradentes 867, ap 41", [("ENDERECO", "Rua Tiradentes 867, ap 41")]),
         ("meu endereço é Travessa Boa Vista", [("ENDERECO", "Travessa Boa Vista")]),
         ("vou passar na rua amanhã", []),
         ("a avenida tava parada", []),

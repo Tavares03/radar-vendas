@@ -1,0 +1,103 @@
+# Imobiliária: aprovação de financiamento depende do banco; custos de ITBI, cartório,
+# condomínio e IPTU precisam ser informados.
+
+vocab:
+  empresa: ["Lar Ideal Imóveis", "Chave Certa Imobiliária", "Morada Nova Imóveis", "Porto Seguro Lar"]
+  produto: ["o apartamento de 2 quartos", "a casa no condomínio", "o studio perto do metrô", "o lançamento da zona sul"]
+  simulacao: ["uma simulação de financiamento", "a simulação", "os valores de entrada e parcelas"]
+  documento: ["a ficha do imóvel", "a proposta de compra", "a matrícula do imóvel"]
+  concorrente: ["outra imobiliária", "construtora direto", "imobiliária do bairro", "plataforma online"]
+  canal_oficial: ["o boleto da construtora", "a conta da incorporadora no contrato", "o sinal pela conta oficial da imobiliária"]
+  valor_parcela: ["R$ 2.350,00", "R$ 1.980,00", "R$ 3.120,00", "R$ 2.640,00"]
+  valor_imovel: ["R$ 420 mil", "R$ 385 mil", "R$ 650 mil", "R$ 290 mil"]
+  valor_entrada: ["R$ 84 mil", "R$ 60 mil", "R$ 130 mil"]
+  prazo: ["360 meses", "30 anos", "420 meses"]
+
+atos:
+  cliente.pergunta_garantia:
+    familias:
+      aprova:
+        - "Meu financiamento é aprovado com certeza?"
+        - "Tenho garantia que o banco aprova?"
+      valoriza:
+        - "Esse imóvel valoriza mesmo?"
+        - "Vale a pena como investimento, vai valorizar?"
+        - "Garantem que eu consigo alugar fácil?"
+      documentacao:
+        - "A documentação tá toda certa?"
+        - "Esse imóvel tem alguma pendência?"
+
+  vendedor.apresentacao:
+    familias:
+      imovel:
+        - "{produto} tem 65 m², vaga de garagem e fica a 5 minutos do metrô"
+        - "Temos {produto} por {valor_imovel}, com área de lazer completa"
+      visita:
+        - "Posso agendar uma visita pra você conhecer pessoalmente"
+        - "Quer visitar no sábado? Tenho horário de manhã"
+      condicoes:
+        - "Aceita financiamento bancário e FGTS"
+        - "A construtora facilita a entrada em até 36 vezes"
+
+  vendedor.divulgacao:
+    familias:
+      custos_extras:
+        - "Lembrando que além do valor do imóvel tem ITBI e custos de cartório, mais ou menos 4%"
+        - "Importante: ITBI, escritura e registro ficam por conta do comprador"
+      condominio:
+        - "O condomínio está em torno de R$ 650 e o IPTU é cobrado à parte"
+        - "Não esquece de considerar condomínio e IPTU no seu orçamento"
+      aprovacao_banco:
+        - "A aprovação do financiamento depende da análise de crédito do banco"
+        - "O banco analisa sua renda e pode aprovar um valor diferente do pedido"
+
+  vendedor.envia_simulacao:
+    familias:
+      financiamento:
+        - "Simulei: entrada de {valor_entrada} e parcelas de {valor_parcela} em {prazo}"
+        - "Segue {simulacao}: {valor_imovel}, entrada {valor_entrada}, parcela inicial de {valor_parcela}"
+      bancos:
+        - "Fiz {simulacao} em dois bancos, a melhor parcela ficou em {valor_parcela}"
+        - "Comparei as taxas e te mandei {simulacao} da mais vantajosa"
+      pdf:
+        - "Enviei {simulacao} em PDF, já com estimativa de ITBI e cartório"
+        - "Te mandei por email {simulacao} completa"
+
+  vendedor.negativa_correta:
+    familias:
+      aprova:
+        - "Não posso garantir a aprovação, quem decide é o banco depois da análise"
+        - "Ninguém pode te garantir crédito aprovado antes da análise do banco"
+      valoriza:
+        - "Não dá pra garantir valorização, mas a região tem histórico bom"
+        - "Não te prometo retorno, investimento em imóvel tem risco também"
+      documentacao:
+        - "Antes de fechar vamos tirar todas as certidões, não posso afirmar nada sem elas"
+        - "Não assino embaixo sem ver a matrícula atualizada, vou pedir pra você"
+
+  vendedor.promessa_indevida:
+    rotulos: [promessa_indevida]
+    familias:
+      aprova:
+        - "Seu financiamento está aprovado, pode contar, eu garanto"
+        - "Com a sua renda o banco aprova com certeza"
+        - "Aprovação garantida, já conversei com o gerente"
+      valoriza:
+        - "Em um ano esse imóvel valoriza 30%, é certeza"
+        - "Você vai dobrar o dinheiro em 5 anos, garantido"
+      aluguel:
+        - "Aluga em uma semana, eu garanto inquilino"
+        - "Te garanto renda de aluguel de 1% ao mês desde o primeiro mês"
+
+  vendedor.informacao_enganosa:
+    rotulos: [informacao_enganosa]
+    familias:
+      sem_custos:
+        - "Não tem nenhum custo além do valor do imóvel"
+        - "ITBI e cartório? Não precisa pagar nada disso"
+      documentacao:
+        - "A documentação está perfeita, não precisa nem olhar a matrícula"
+        - "Esse imóvel não tem pendência nenhuma, pode confiar sem certidão"
+      condominio:
+        - "O condomínio já está incluso na parcela"
+        - "IPTU é isento nesse prédio, fica tranquilo"

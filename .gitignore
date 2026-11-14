@@ -36,6 +36,8 @@ frontend/playwright-report/
 
 # ---- Dados e modelos gerados (grandes; reproduzíveis por script) ----
 /data/generated/
+/data/review/
+/data/hf/
 /data/uploads/
 /data/media/
 /data/cache/

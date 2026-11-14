@@ -253,6 +253,28 @@ LABELS_PT: dict[str, str] = {
 
 SEVERITY_PT: dict[str, str] = {"info": "Info", "atencao": "Atenção", "critico": "Crítico"}
 
+#: Severidade de cada tipo de alerta quando o playbook do setor não diz outra coisa. É também a
+#: verdade de referência do dataset sintético e dos evals.
+DEFAULT_SEVERITY: dict[str, Severity] = {
+    # riscos de compliance
+    "promessa_indevida": Severity.CRITICO,
+    "informacao_enganosa": Severity.CRITICO,
+    "pagamento_fora_canal": Severity.CRITICO,
+    "dados_pessoais_indevidos": Severity.CRITICO,
+    "pressao_abusiva": Severity.ATENCAO,
+    "linguagem_inadequada": Severity.ATENCAO,
+    # oportunidades perdidas
+    "pedido_pendente": Severity.ATENCAO,
+    "objecao_sem_resposta": Severity.ATENCAO,
+    "sinal_compra_ignorado": Severity.ATENCAO,
+    "lead_esfriando": Severity.ATENCAO,
+    # qualidade do atendimento
+    "demora_resposta": Severity.INFO,
+    "follow_up_ausente": Severity.INFO,
+    # segurança da análise
+    "tentativa_manipulacao": Severity.ATENCAO,
+}
+
 
 def category_of(alert_type: str) -> AlertCategory:
     """Categoria de um tipo de alerta (risco, oportunidade ou qualidade)."""

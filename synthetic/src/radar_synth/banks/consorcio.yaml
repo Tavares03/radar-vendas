@@ -1,0 +1,113 @@
+# Consórcio: contemplação só por sorteio ou lance. Prometer data ou garantia é proibido.
+
+vocab:
+  empresa: ["Consórcio Horizonte", "Plano Certo Consórcios", "Rumo Administradora", "Conquista Consórcios"]
+  produto: ["o consórcio de imóvel", "o consórcio de carro", "uma carta de crédito", "o consórcio de moto"]
+  simulacao: ["uma simulação", "a simulação", "uns valores"]
+  documento: ["a proposta", "o regulamento do grupo", "o resumo do plano"]
+  concorrente: ["Caixa", "administradora do banco", "concorrência", "outra administradora"]
+  canal_oficial: ["o boleto oficial da administradora", "o link de pagamento oficial", "o app da administradora"]
+  valor_parcela: ["R$ 687,00", "R$ 1.150,00", "R$ 412,90", "R$ 935,40"]
+  valor_credito: ["R$ 80 mil", "R$ 150 mil", "R$ 45 mil", "R$ 250 mil"]
+  prazo: ["180 meses", "100 meses", "80 meses", "220 meses"]
+  taxa_adm: ["16%", "18%", "15,5%", "19%"]
+
+atos:
+  cliente.pergunta_garantia:
+    familias:
+      quando_contempla:
+        - "Em quanto tempo eu sou contemplado?"
+        - "Quando eu pego a carta de crédito?"
+        - "Consigo ser contemplado logo no começo?"
+      garantido:
+        - "É garantido que eu sou contemplado?"
+        - "Tem garantia de contemplação?"
+      lance:
+        - "Se eu der lance eu ganho com certeza?"
+        - "Quanto de lance precisa pra ser contemplado no primeiro mês?"
+
+  cliente.objecao_prazo:
+    familias:
+      espera_contemplacao:
+        - "Não quero esperar anos pra ser contemplado"
+        - "E se eu for contemplado só no final?"
+
+  vendedor.apresentacao:
+    familias:
+      como_funciona:
+        - "O consórcio funciona assim: um grupo de pessoas paga parcelas e todo mês tem contemplação por sorteio e por lance"
+        - "No consórcio você compra planejado, sem juros de financiamento, e é contemplado por sorteio ou lance"
+      carta:
+        - "Temos cartas de {valor_credito} em {prazo}, com parcelas a partir de {valor_parcela}"
+        - "Pra {produto} temos grupos com crédito de {valor_credito}"
+      vantagem:
+        - "A vantagem é não pagar juros: você paga a taxa de administração e o crédito é corrigido"
+        - "É ótimo pra quem pode planejar, porque o custo total é bem menor que um financiamento"
+
+  vendedor.divulgacao:
+    familias:
+      taxa_adm:
+        - "Importante: tem taxa de administração de {taxa_adm} diluída nas parcelas, e fundo de reserva"
+        - "Além do crédito, você paga a taxa de administração ({taxa_adm} no total) e o fundo de reserva"
+      sorteio_lance:
+        - "A contemplação é só por sorteio ou lance, ninguém pode te garantir data"
+        - "Não existe data certa de contemplação: depende de sorteio ou do seu lance"
+      cancelamento:
+        - "Se você desistir, o valor pago é devolvido conforme o contrato, normalmente quando for sorteado como excluído ou no fim do grupo"
+        - "Em caso de desistência tem regras de restituição e pode haver multa, está tudo no regulamento"
+
+  vendedor.envia_simulacao:
+    familias:
+      simulacao:
+        - "Fiz {simulacao}: crédito de {valor_credito} em {prazo}, parcela de {valor_parcela}"
+        - "Segue: carta de {valor_credito}, {prazo}, parcelas de {valor_parcela} já com taxa de administração"
+      opcoes:
+        - "Opção 1: {valor_credito} com parcela de {valor_parcela}\nOpção 2: crédito menor, parcela mais leve"
+        - "Montei duas opções pra você, a primeira com parcela de {valor_parcela}"
+      pdf:
+        - "Te mandei {simulacao} em PDF com todos os valores"
+        - "Enviei por email {simulacao} detalhada, com taxa de administração e fundo de reserva"
+
+  vendedor.negativa_correta:
+    familias:
+      garantido:
+        - "Não posso te garantir a contemplação, ela só acontece por sorteio ou lance"
+        - "Ninguém pode garantir data de contemplação, quem promete isso está mentindo"
+        - "Vou ser honesto: não tem como garantir que você é contemplado no primeiro mês"
+      lance:
+        - "Lance alto aumenta a chance, mas não garante contemplação"
+        - "Nem com lance dá pra garantir, depende dos outros lances do grupo"
+      quando_contempla:
+        - "Não existe data certa, pode ser no primeiro mês ou no último"
+        - "Não te prometo prazo, só te explico como aumentar suas chances"
+
+  vendedor.promessa_indevida:
+    rotulos: [promessa_indevida]
+    familias:
+      garantido:
+        - "Pode ficar tranquilo que sua contemplação é garantida"
+        - "Contemplação garantida, eu garanto pessoalmente"
+        - "Fechando comigo você é contemplado com certeza"
+      quando_contempla:
+        - "Você vai ser contemplado já no terceiro mês, pode contar"
+        - "Em 60 dias você está com a carta na mão"
+        - "No máximo em 4 meses você é contemplado, garantido"
+      lance:
+        - "Com lance de 30% você é contemplado no primeiro mês com certeza"
+        - "Dando esse lance não tem erro, sai na próxima assembleia"
+      grupo_especial:
+        - "Esse grupo é especial, todo mundo sai contemplado rapidinho"
+        - "Tenho uma cota já contemplada separada pra você, é só pagar a entrada"
+
+  vendedor.informacao_enganosa:
+    rotulos: [informacao_enganosa]
+    familias:
+      sem_taxa:
+        - "Não tem taxa nenhuma, você paga só o crédito"
+        - "Taxa de administração não tem, é zero custo"
+      igual_financiamento:
+        - "É igual financiamento, aprovou já sai o dinheiro"
+        - "Funciona como empréstimo, o crédito sai na hora"
+      cancelamento:
+        - "Se desistir eu devolvo tudo na hora, sem multa"
+        - "Pode sair quando quiser que recebe tudo de volta no mesmo mês"

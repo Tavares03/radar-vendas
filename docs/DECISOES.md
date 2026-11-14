@@ -164,3 +164,30 @@ desligar as chaves estrangeiras.
 **Motivo:** o `PRAGMA foreign_keys=ON` executado dentro da transação era ignorado pelo SQLite, e
 o `ON DELETE CASCADE` deixava de valer nos testes — um teste podia passar no SQLite e falhar no
 PostgreSQL. Um teste garante que as chaves continuam ligadas.
+
+## D25 — Dataset por templates com anotação por construção (e LLM só para variedade)
+**Decisão:** as conversas nascem de roteiros e bancos de templates; rótulos e posições de dados
+pessoais vêm do ato e do slot que geraram cada trecho. LLM gratuito entra só para paráfrases
+(validadas) e para um conjunto fora de distribuição.
+**Alternativas:** pedir ao LLM conversas já rotuladas (rótulos ruidosos, sem posições exatas,
+não reprodutível); anotar depois com heurística (circular: o modelo aprenderia a heurística).
+**Motivo:** rótulos confiáveis, reprodutibilidade por semente e custo zero; o LLM aumenta a
+variedade sem ser a fonte da verdade.
+
+## D26 — Splits por família de template, separados por grupo
+**Decisão:** famílias inteiras vão para treino ou para a parte reservada; a separação é feita por
+(arquivo de origem, ato), e cada tipo de dado pessoal tem um ato próprio com 3+ famílias.
+**Motivo:** sem isso o teste mediria memorização. A versão inicial ligava cada tipo de dado
+pessoal a uma única família, e tipos inteiros (endereço, RG, CNPJ) sumiam do treino — um teste
+agora garante os 11 tipos nos três splits.
+
+## D27 — Severidade padrão na taxonomia
+**Decisão:** `DEFAULT_SEVERITY` em `radar.taxonomy` é a severidade de cada tipo de alerta quando
+o playbook não define outra, e a verdade de referência do dataset e dos evals.
+**Motivo:** gerador, playbooks e evals precisam falar a mesma severidade.
+
+## D28 — Transcrição que acompanha o áudio no zip
+**Decisão:** os áudios sintéticos são arquivos falsos com a transcrição ao lado
+(`<áudio>.txt`), que o Radar já usa no lugar do Whisper.
+**Motivo:** a demo e os testes exercitam o caminho de áudio inteiro sem TTS nem modelo de fala.
+Os dois `.opus` de `data/samples/audio` continuam cobrindo a transcrição real.

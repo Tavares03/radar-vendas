@@ -1,0 +1,103 @@
+# Seguros: cobertura, franquia, carência e exclusões precisam ser informadas. Quem aprova o
+# sinistro é a seguradora, depois da análise.
+
+vocab:
+  empresa: ["Proteja Corretora", "Escudo Seguros", "Abrigo Corretora de Seguros", "Vigia Seguros"]
+  produto: ["o seguro auto", "o seguro de vida", "o seguro residencial", "o seguro do carro"]
+  simulacao: ["uma cotação", "a cotação", "um orçamento"]
+  documento: ["a apólice", "as condições gerais", "a proposta do seguro"]
+  concorrente: ["seguradora do banco", "outra corretora", "concorrência", "corretora online"]
+  canal_oficial: ["o boleto da seguradora", "o link de pagamento da seguradora", "o débito automático da seguradora"]
+  valor_parcela: ["R$ 189,90", "R$ 254,00", "R$ 97,50", "R$ 310,00"]
+  valor_premio: ["R$ 2.280,00 por ano", "R$ 1.150,00 por ano", "R$ 3.040,00 por ano"]
+  franquia: ["R$ 3.500,00", "R$ 2.900,00", "R$ 4.200,00"]
+  prazo: ["12 meses", "um ano", "24 meses"]
+
+atos:
+  cliente.pergunta_garantia:
+    familias:
+      cobre_tudo:
+        - "Se eu bater o carro cobre tudo?"
+        - "Cobre qualquer coisa que acontecer?"
+      aprovacao:
+        - "Se der sinistro vocês aprovam na hora?"
+        - "Tenho garantia que vão pagar se acontecer algo?"
+        - "É certeza que a seguradora paga?"
+      preexistente:
+        - "Cobre doença que eu já tenho?"
+        - "E se eu já tiver um problema de saúde, cobre igual?"
+
+  vendedor.apresentacao:
+    familias:
+      coberturas:
+        - "O seguro tem cobertura para colisão, roubo, furto e terceiros, além de assistência 24h"
+        - "No seguro de vida você escolhe as coberturas: morte, invalidez e assistência funeral"
+      planos:
+        - "Temos planos a partir de {valor_parcela} por mês"
+        - "Trabalho com várias seguradoras e busco a melhor opção pra você"
+      assistencia:
+        - "Inclui guincho, chaveiro e carro reserva, conforme o plano"
+        - "Tem assistência 24 horas em todo o Brasil"
+
+  vendedor.divulgacao:
+    familias:
+      franquia:
+        - "Importante: a franquia é de {franquia}, você paga isso em caso de sinistro parcial"
+        - "Lembrando que tem franquia de {franquia} e ela vale para danos parciais"
+      carencia:
+        - "O seguro de vida tem carência para algumas coberturas, te mando as condições gerais"
+        - "Tem período de carência e algumas exclusões, está tudo na apólice"
+      exclusoes:
+        - "Alguns casos não são cobertos, como dirigir alcoolizado ou uso comercial não declarado"
+        - "Doença preexistente não declarada pode não ser coberta, por isso precisa preencher a declaração"
+
+  vendedor.envia_simulacao:
+    familias:
+      cotacao:
+        - "Fiz {simulacao}: prêmio de {valor_premio}, ou 12x de {valor_parcela}"
+        - "Segue {simulacao}: {valor_parcela} por mês com franquia de {franquia}"
+      comparativo:
+        - "Cotei em três seguradoras, a melhor ficou {valor_parcela} por mês"
+        - "Te mandei um comparativo com as coberturas de cada uma"
+      detalhado:
+        - "Enviei {simulacao} detalhada com coberturas, franquia e assistências"
+        - "Está no seu email {simulacao}, com franquia de {franquia}"
+
+  vendedor.negativa_correta:
+    familias:
+      aprovacao:
+        - "Não posso garantir o pagamento do sinistro, quem decide é a seguradora depois da análise"
+        - "A aprovação não é automática, depende da análise e das condições da apólice"
+      cobre_tudo:
+        - "Não cobre tudo, não: tem exclusões e franquia, te explico cada uma"
+        - "Seria desonesto dizer que cobre qualquer coisa, tem regras"
+      preexistente:
+        - "Doença preexistente precisa ser declarada, não posso garantir cobertura sem a análise"
+        - "Não posso te prometer cobertura de algo que você já tem, depende da declaração"
+
+  vendedor.promessa_indevida:
+    rotulos: [promessa_indevida]
+    familias:
+      cobre_tudo:
+        - "Cobre tudo, qualquer coisa que acontecer a seguradora paga"
+        - "Pode bater, roubar, pegar fogo, cobre tudo sem exceção"
+      aprovacao:
+        - "Sinistro aprovado na hora, garantido"
+        - "Comigo o sinistro é aprovado com certeza, eu conheço o pessoal lá"
+        - "Pode ficar tranquilo que se acontecer algo eles pagam 100%, garanto"
+      preexistente:
+        - "Doença que você já tem cobre sim, nem precisa declarar"
+        - "Não precisa falar da sua pressão alta, o seguro paga igual"
+
+  vendedor.informacao_enganosa:
+    rotulos: [informacao_enganosa]
+    familias:
+      sem_franquia:
+        - "Esse plano não tem franquia nenhuma"
+        - "Franquia? Aqui não tem isso não"
+      sem_carencia:
+        - "Não tem carência, cobre desde o primeiro dia pra tudo"
+        - "Carência nenhuma, assinou já está coberto em tudo"
+      cancelamento:
+        - "Pode cancelar quando quiser que devolvo o ano inteiro"
+        - "Se cancelar você recebe tudo de volta, sem desconto nenhum"

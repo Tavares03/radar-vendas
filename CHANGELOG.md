@@ -39,6 +39,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   cada 6 horas, `radar retention-run [--dry-run]` e `GET|POST /api/v1/privacy/retention`.
 - `docs/LGPD.md`: bases legais, dados guardados, mascaramento, retenção, direitos do titular,
   controle de acesso e checklist para quem vai usar.
+- Dados sintéticos (`radar-synth`): gerador de conversas de venda em PT-BR no formato do WhatsApp
+  para consórcio, seguros, imobiliária, clínica e varejo, com perfis de vendedor e cliente,
+  ruído de WhatsApp, áudios com transcrição, anotação por mensagem (riscos, objeções, intenção e
+  dados pessoais com posição) e alertas esperados por conversa.
+- Splits sem vazamento de template, manifesto versionado, conjunto de desafio curado, revisão por
+  amostragem, pacote para o Hugging Face com dataset card, e ferramentas de paráfrase e conjunto
+  fora de distribuição com LLM gratuito.
+- Severidade padrão de cada tipo de alerta na taxonomia compartilhada.
 
 ### Corrigido
 - Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).
+- Detector de dados pessoais: complemento "ap 41" no endereço, CNPJ alfanumérico sem formatação
+  com contexto e chave PIX citada mais longe da palavra "pix".

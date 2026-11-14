@@ -1224,6 +1224,7 @@ name = "radar-synthetic"
 version = "0.1.0"
 source = { editable = "synthetic" }
 dependencies = [
+    { name = "httpx" },
     { name = "pyyaml" },
     { name = "radar-vendas" },
     { name = "typer" },
@@ -1231,6 +1232,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "radar-vendas", editable = "backend" },
     { name = "typer", specifier = ">=0.15" },

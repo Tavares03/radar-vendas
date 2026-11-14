@@ -1,0 +1,102 @@
+# Clínica (estética e odontologia): resultado varia, avaliação é obrigatória e riscos precisam
+# ser informados. Os exemplos evitam dados de saúde de pessoas.
+
+vocab:
+  empresa: ["Clínica Sorriso Pleno", "Bem Estar Estética", "Odonto Vida", "Clínica Renova"]
+  produto: ["o clareamento dental", "o tratamento de harmonização", "o implante dentário", "a limpeza de pele", "o aparelho ortodôntico"]
+  simulacao: ["um orçamento", "o orçamento", "os valores do tratamento"]
+  documento: ["o plano de tratamento", "o orçamento detalhado", "o termo de consentimento"]
+  concorrente: ["clínica do shopping", "outra clínica", "consultório do bairro", "concorrência"]
+  canal_oficial: ["o link de pagamento da clínica", "a maquininha na recepção", "o boleto emitido pela clínica"]
+  valor_parcela: ["R$ 189,00", "R$ 349,00", "R$ 520,00", "R$ 99,90"]
+  valor_total: ["R$ 1.200,00", "R$ 3.800,00", "R$ 6.500,00", "R$ 890,00"]
+  prazo: ["6 sessões", "12 meses", "3 meses de tratamento"]
+
+atos:
+  cliente.pergunta_garantia:
+    familias:
+      resultado:
+        - "O resultado é garantido?"
+        - "Fica igual da foto que vocês postaram?"
+        - "Em quanto tempo eu vejo resultado?"
+      dor:
+        - "Dói muito?"
+        - "Tem algum risco?"
+      definitivo:
+        - "É definitivo?"
+        - "Dura pra sempre?"
+
+  vendedor.apresentacao:
+    familias:
+      procedimento:
+        - "{produto} é feito em {prazo}, com acompanhamento do especialista"
+        - "Trabalhamos com {produto} com profissionais especializados"
+      avaliacao:
+        - "O primeiro passo é uma avaliação gratuita com o dentista"
+        - "Antes de tudo fazemos uma avaliação pra indicar o tratamento certo"
+      condicoes:
+        - "Parcelamos em até 12x de {valor_parcela}"
+        - "O valor total fica em torno de {valor_total}, dependendo da avaliação"
+
+  vendedor.divulgacao:
+    familias:
+      resultado_varia:
+        - "O resultado varia de pessoa pra pessoa, depende da avaliação"
+        - "Cada caso é um caso, o profissional explica o que esperar no seu"
+      riscos:
+        - "Como todo procedimento, tem riscos e contraindicações, que o profissional explica na avaliação"
+        - "Você assina um termo de consentimento com os riscos antes de começar"
+      cuidados:
+        - "Depois do procedimento tem cuidados que precisam ser seguidos"
+        - "Pode haver sensibilidade nos primeiros dias, é normal"
+
+  vendedor.envia_simulacao:
+    familias:
+      orcamento:
+        - "Segue {simulacao}: total de {valor_total}, ou 12x de {valor_parcela}"
+        - "Ficou {valor_total} o tratamento completo, parcelando em {valor_parcela}"
+      apos_avaliacao:
+        - "O valor exato sai na avaliação, mas a média é {valor_total}"
+        - "Te mandei {simulacao} estimado, confirmamos na avaliação"
+      detalhado:
+        - "Enviei {simulacao} detalhado com cada etapa"
+        - "Está no seu email {simulacao} com as formas de pagamento"
+
+  vendedor.negativa_correta:
+    familias:
+      resultado:
+        - "Não posso garantir resultado, cada organismo responde de um jeito"
+        - "Seria antiético prometer resultado igual ao da foto"
+      dor:
+        - "Não posso dizer que não tem desconforto nenhum, alguns pacientes sentem um pouco"
+        - "Não vou te dizer que é risco zero, todo procedimento tem riscos"
+      avaliacao:
+        - "Sem avaliação não consigo afirmar nada sobre o seu caso"
+        - "Não indico começar sem a avaliação do profissional"
+
+  vendedor.promessa_indevida:
+    rotulos: [promessa_indevida]
+    familias:
+      resultado:
+        - "Resultado garantido, fica igualzinho a foto"
+        - "Te garanto que vai ficar perfeito, 100% de satisfação"
+        - "É certeza que resolve, nunca falhou com ninguém"
+      dor:
+        - "Não dói nada, zero dor garantido"
+        - "Risco zero, é mais seguro que tomar um café"
+      definitivo:
+        - "É definitivo, nunca mais precisa fazer"
+        - "Faz uma vez e dura a vida inteira, garantido"
+
+  vendedor.informacao_enganosa:
+    rotulos: [informacao_enganosa]
+    familias:
+      sem_avaliacao:
+        - "Não precisa de avaliação, já pode marcar direto o procedimento"
+        - "Avaliação é só burocracia, pode pular"
+      sem_efeito:
+        - "Não tem efeito colateral nenhum"
+        - "Não tem contraindicação, qualquer um pode fazer"
+      preco_final:
+        - "Esse valor já inclui tudo, não tem mais nada a pagar"
+        - "Manutenção é grátis pra sempre"

@@ -1,0 +1,101 @@
+# Genérico: varejo e serviços (planos, assinaturas, produtos). Fidelidade, frete, troca e
+# garantia legal precisam ser informados.
+
+vocab:
+  empresa: ["Loja Ponto Certo", "Conecta Serviços", "Casa & Cia", "Mega Planos"]
+  produto: ["o plano de internet 500 mega", "a geladeira frost free", "o plano empresarial", "o curso online", "o sofá retrátil"]
+  simulacao: ["um orçamento", "o orçamento", "os valores"]
+  documento: ["o contrato", "a proposta comercial", "os termos de uso"]
+  concorrente: ["loja do concorrente", "concorrência", "site grande", "outra empresa"]
+  canal_oficial: ["o link de pagamento do site", "o boleto da loja", "o checkout oficial"]
+  valor_parcela: ["R$ 99,90", "R$ 249,00", "R$ 159,90", "R$ 389,00"]
+  valor_total: ["R$ 1.199,00", "R$ 2.988,00", "R$ 4.290,00"]
+  prazo: ["12 meses de fidelidade", "24 meses", "10 parcelas"]
+
+atos:
+  cliente.pergunta_garantia:
+    familias:
+      entrega:
+        - "Chega até sexta com certeza?"
+        - "Vocês garantem a entrega no prazo?"
+      defeito:
+        - "E se der defeito?"
+        - "Tem garantia?"
+        - "Qual a garantia do produto?"
+      velocidade:
+        - "A velocidade é garantida mesmo?"
+        - "Vai funcionar bem na minha região?"
+
+  vendedor.apresentacao:
+    familias:
+      produto:
+        - "{produto} sai por {valor_total} ou 12x de {valor_parcela}"
+        - "Temos {produto} com instalação inclusa"
+      beneficios:
+        - "Inclui suporte técnico e atendimento pelo app"
+        - "Você acompanha tudo pelo nosso site"
+      promocao:
+        - "Essa semana tem frete grátis pra sua região"
+        - "No pix tem 5% de desconto pelo checkout do site"
+
+  vendedor.divulgacao:
+    familias:
+      fidelidade:
+        - "Importante: o plano tem {prazo}, com multa proporcional se cancelar antes"
+        - "Tem fidelidade de {prazo}, te mando os termos"
+      troca:
+        - "Você tem 7 dias pra desistir da compra online, conforme o Código do Consumidor"
+        - "A troca por defeito segue a garantia legal e a do fabricante"
+      frete:
+        - "O prazo de entrega é estimado e depende da transportadora"
+        - "O frete é calculado no checkout conforme o CEP"
+
+  vendedor.envia_simulacao:
+    familias:
+      orcamento:
+        - "Segue {simulacao}: {valor_total} ou 12x de {valor_parcela}"
+        - "Ficou {valor_parcela} por mês no plano que você pediu"
+      opcoes:
+        - "Te mandei {simulacao} com duas opções de plano"
+        - "Montei {simulacao} com e sem instalação"
+      email:
+        - "Enviei {simulacao} pro seu email"
+        - "Está no seu email {simulacao} com as condições"
+
+  vendedor.negativa_correta:
+    familias:
+      entrega:
+        - "Não consigo garantir o dia exato, o prazo é estimado pela transportadora"
+        - "Não posso prometer entrega até sexta, mas te passo o rastreio"
+      velocidade:
+        - "A velocidade pode variar, não posso garantir 100% o tempo todo"
+        - "Não dá pra garantir sinal perfeito sem a vistoria técnica"
+      defeito:
+        - "Não posso dizer que nunca dá defeito, mas tem garantia de 12 meses"
+        - "Nenhum produto é à prova de defeito, por isso tem garantia"
+
+  vendedor.promessa_indevida:
+    rotulos: [promessa_indevida]
+    familias:
+      entrega:
+        - "Chega amanhã com certeza, eu garanto"
+        - "Entrega garantida em 24h, se atrasar eu pago do meu bolso"
+      defeito:
+        - "Esse aí nunca dá defeito, garantido"
+        - "Pode usar à vontade que não quebra nunca"
+      velocidade:
+        - "Velocidade de 500 mega garantida 100% do tempo, em qualquer lugar"
+        - "Nunca cai, te garanto"
+
+  vendedor.informacao_enganosa:
+    rotulos: [informacao_enganosa]
+    familias:
+      sem_fidelidade:
+        - "Não tem fidelidade nenhuma, cancela quando quiser"
+        - "Multa de cancelamento? Aqui não existe isso"
+      sem_frete:
+        - "Frete grátis pra todo o Brasil, sempre"
+        - "Instalação é grátis em qualquer caso"
+      preco:
+        - "Esse preço não aumenta nunca"
+        - "Valor fixo pra sempre, sem reajuste"

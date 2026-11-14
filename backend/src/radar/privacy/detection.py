@@ -146,7 +146,7 @@ def _detect_cnpj(text: str) -> Iterable[PiiSpan]:
             or (value.isdigit() and is_valid_cnpj(value))
             or (
                 _has_context(text, match.start(), _CNPJ_CTX)
-                and sum(c.isdigit() for c in value) >= 8
+                and (is_valid_cnpj(value) or sum(c.isdigit() for c in value) >= 8)
             )
         ):
             yield _span(match, T.CNPJ)
@@ -270,7 +270,7 @@ _STREET_TYPES = (
 )
 _WORD = r"[A-Za-zÀ-ÿ0-9º°'.]+"
 _COMPLEMENT = (
-    r"(?:\s*[,\-]?\s*(?:apto?\.?|apartamento|ap\.|bloco|bl\.?|casa|sala|conj(?:unto)?\.?|lote"
+    r"(?:\s*[,\-]?\s*(?:apto?\.?|apartamento|ap\.?|bloco|bl\.?|casa|sala|conj(?:unto)?\.?|lote"
     r"|lt\.?|andar|fundos)\s*[A-Za-z0-9]{0,5}(?![\w]))*"
 )
 _ADDRESS_NUMBERED_RE = re.compile(
@@ -403,6 +403,8 @@ _DETECTORS: tuple[Callable[[str], Iterable[PiiSpan]], ...] = (
     _detect_names_by_context,
 )
 _PIX_RETYPE = frozenset({T.CPF, T.CNPJ, T.EMAIL, T.TELEFONE})
+#: Até onde olhar para trás procurando "pix" ("faz o pix direto pra mim que eu repasso: <chave>").
+_PIX_WINDOW = 45
 
 
 def _apply_pix_context(text: str, spans: list[PiiSpan]) -> list[PiiSpan]:
@@ -410,7 +412,7 @@ def _apply_pix_context(text: str, spans: list[PiiSpan]) -> list[PiiSpan]:
     result = []
     for span in spans:
         if span.type in _PIX_RETYPE:
-            before = text[max(0, span.start - 25) : span.start]
+            before = text[max(0, span.start - _PIX_WINDOW) : span.start]
             pix = None
             for pix in _PIX_CTX.finditer(before):  # noqa: B007  (fica com a última ocorrência)
                 pass
