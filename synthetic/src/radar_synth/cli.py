@@ -95,7 +95,7 @@ def samples(
             _name, data = export_zip(conversation, platform=("android", "ios")[index % 2])
             (out / f"{conversation.id}.zip").write_bytes(data)
             rows.append(json.dumps(conversation.to_dict(), ensure_ascii=False, sort_keys=True))
-    (out / "anotacoes.jsonl").write_text("\n".join(rows) + "\n", encoding="utf-8")
+    (out / "anotacoes.jsonl").write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     typer.echo(f"{len(rows)} conversas de exemplo em {out}")
 
 
@@ -173,7 +173,7 @@ def ood(
             continue
         rows.append(json.dumps(conversation.to_dict(), ensure_ascii=False, sort_keys=True))
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    out.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     typer.echo(f"{len(rows)} conversas em {out}. Revise antes de usar nos evals.")
 
 

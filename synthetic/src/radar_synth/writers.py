@@ -121,8 +121,16 @@ def export_zip(
     """``(nome do zip, conteúdo)`` como o aplicativo entrega ao exportar."""
     files = render_export(conversation, platform=platform, language=language, with_media=with_media)
     buffer = io.BytesIO()
+    # A data dos arquivos no zip é a do export (não a do relógio): o mesmo export gera o mesmo zip.
+    stamp = conversation.exported_at.timetuple()[:6]
+
+    def entry(name: str) -> zipfile.ZipInfo:
+        info = zipfile.ZipInfo(name, date_time=stamp)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        return info
+
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr(files.chat_name, files.chat_text.encode("utf-8"))
+        archive.writestr(entry(files.chat_name), files.chat_text.encode("utf-8"))
         for name, content in sorted(files.media.items()):
-            archive.writestr(name, content)
+            archive.writestr(entry(name), content)
     return f"{_title(conversation, language)}.zip", buffer.getvalue()

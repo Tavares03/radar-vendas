@@ -88,6 +88,17 @@ def test_radar_identifica_vendedor_e_cliente_nos_exports(tmp_path: Path):
         assert roles[conversation.customer_display].role is SenderRole.CLIENTE
 
 
+def test_zip_e_reprodutivel(monkeypatch: pytest.MonkeyPatch):
+    import time
+
+    conversation = _conversations(1)[0]
+    first = export_zip(conversation, platform="ios", language="pt")
+    later = time.time() + 3600
+    monkeypatch.setattr(time, "time", lambda: later)  # o relógio andou uma hora
+    second = export_zip(conversation, platform="ios", language="pt")
+    assert first == second
+
+
 def test_nome_do_zip_segue_o_padrao_do_aplicativo():
     conversation = _conversations(1)[0]
     pt_name, _ = export_zip(conversation, platform="android", language="pt")

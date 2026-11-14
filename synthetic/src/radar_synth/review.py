@@ -96,7 +96,7 @@ def write_review(sample: Sequence[SynthConversation], out_dir: Path) -> tuple[Pa
         )
         lines += ["", f"**Alertas esperados:** {alerts or 'nenhum'}", ""]
     markdown = out_dir / "revisao.md"
-    markdown.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    markdown.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     sheet = out_dir / "revisao.csv"
     with sheet.open("w", encoding="utf-8", newline="") as handle:

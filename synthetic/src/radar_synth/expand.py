@@ -138,5 +138,6 @@ def save_expansions(origin: str, expansions: dict[str, dict[str, list[str]]]) ->
     path.write_text(
         header + yaml.safe_dump(current, allow_unicode=True, sort_keys=True, width=100),
         encoding="utf-8",
+        newline="\n",
     )
     return path

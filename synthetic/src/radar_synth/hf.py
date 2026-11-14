@@ -197,6 +197,6 @@ def build_hf_folder(dataset_dir: Path, out_dir: Path) -> Path:
             row["ner"] = list(ner_rows(conversation))
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
-    (out_dir / "README.md").write_text(_card(manifest), encoding="utf-8")
+    (out_dir / "README.md").write_text(_card(manifest), encoding="utf-8", newline="\n")
     shutil.copyfile(dataset_dir / "manifest.json", out_dir / "manifest.json")
     return out_dir
