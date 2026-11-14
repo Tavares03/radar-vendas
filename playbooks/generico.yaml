@@ -1,0 +1,230 @@
+# Playbook genérico: a base de todos os setores (varejo, serviços, assinaturas).
+# Guia: docs/PLAYBOOKS.md. Padrões são regex comparadas sem maiúsculas e sem acentos,
+# sobre o texto já mascarado (dados pessoais viram [CPF], [PIX], [TELEFONE]...).
+
+id: generico
+nome: Genérico (varejo e serviços)
+versao: 1
+descricao: >
+  Riscos que valem para qualquer venda pelo WhatsApp (pagamento fora do canal, pedido de senha,
+  pressão, grosseria) e os sinais do cliente (objeções, pedidos e intenção de compra).
+
+regras:
+  # ------------------------------------------------------------------ riscos (vendedor)
+  - id: pagamento-pix-pessoal
+    tipo: pagamento_fora_canal
+    descricao: Pedir pagamento em PIX ou conta pessoal do vendedor
+    explicacao: >
+      Pagamento só pelos canais oficiais da empresa (boleto, link, conta da empresa). PIX ou conta
+      pessoal do vendedor é o caminho mais comum de golpe e de desvio, e a empresa responde por ele.
+    padroes:
+      - "(meu|minha) (pix|chave( pix)?)( pessoal)?\\b"
+      - "pix (pessoal|direto pra mim|pra mim)"
+      - "(deposit|transfer)\\w* (direto )?(pra|para|na) (mim|minha conta)"
+      - "minha conta pessoal|conta pessoal"
+      - "(me paga|paga|pagar|pagamento|pague) por fora"
+      - "dinheiro na minha mao"
+      - "esquece o boleto|(link|boleto) (meu|que eu gerei)"
+      - "pix pra \\[pix\\]"
+
+  - id: dados-senha-cartao
+    tipo: dados_pessoais_indevidos
+    descricao: Pedir senha, código de segurança ou foto do cartão
+    explicacao: >
+      Nenhuma venda legítima precisa de senha de banco, de e-mail ou do gov.br, nem do código de
+      segurança (CVV) do cartão. Pedir isso expõe o cliente a fraude e viola a LGPD (necessidade).
+    padroes:
+      - "senha (do|da|de|dos)"
+      - "(codigo|cod\\.?) (de seguranca|de tras|cvv)"
+      - "\\bcvv\\b"
+      - "foto do (seu )?cartao|cartao frente e verso|numero do cartao"
+      - "extrato bancario"
+
+  - id: dados-de-terceiros
+    tipo: dados_pessoais_indevidos
+    descricao: Compartilhar dados de outro cliente
+    explicacao: >
+      Passar CPF, telefone ou dados de outro cliente (mesmo como "referência") é tratamento
+      indevido de dados pessoais de terceiros.
+    padroes:
+      - "(o|a|seu|sua) (cpf|rg|telefone|numero|contato|endereco) (dela|dele|do outro|da outra)"
+      - "(cpf|telefone|numero) (dela|dele) (e|eh) \\["
+
+  - id: pressao-so-hoje
+    tipo: pressao_abusiva
+    descricao: Urgência falsa ("só hoje")
+    explicacao: >
+      Criar urgência artificial para impedir o cliente de pensar é prática abusiva (Código de
+      Defesa do Consumidor, art. 39) e gera arrependimento e cancelamento.
+    padroes:
+      - "(so|somente|apenas) (ate )?hoje"
+      - "acaba hoje|expira hoje|amanha (ja )?nao (vale|tem)"
+      - "se nao fechar ate"
+
+  - id: pressao-ultima-vaga
+    tipo: pressao_abusiva
+    descricao: Escassez falsa ("última vaga")
+    explicacao: Escassez inventada pressiona a decisão e é prática abusiva.
+    padroes:
+      - "ultima(s)? (vaga|unidade|cota)"
+      - "so tem mais (um|uma)\\b"
+      - "tem gente esperando"
+
+  - id: pressao-decide-agora
+    tipo: pressao_abusiva
+    descricao: Não deixar o cliente pensar
+    explicacao: O cliente tem o direito de pensar e consultar a família antes de decidir.
+    padroes:
+      - "decide (agora|hoje|logo)|fecha logo|tem que ser agora|agora ou nunca"
+      - "nao (da|tem como) (pra )?pensar"
+      - "(pensar|pensa) depois e perder"
+      - "(perde|perder|vai perder) (essa|a) (oferta|oportunidade|condicao)"
+      - "depois nao reclama|fica pra tras"
+      - "(ligar|ligo) ate (voce|vc) fechar"
+    considera_negacao: false
+
+  - id: linguagem-ofensiva
+    tipo: linguagem_inadequada
+    descricao: Palavrão, ofensa ou desdém com o cliente
+    explicacao: Linguagem ofensiva ou desrespeitosa com o cliente é inaceitável em qualquer canal.
+    padroes:
+      - "\\b(porra|caralho|merda|bosta|puta)\\b"
+      - "vai se (catar|ferrar|foder|lascar)"
+      - "\\b(idiota|imbecil|otario|burr[oa]|palhac[oa])\\b"
+      - "pergunta (burra|idiota|besta)"
+      - "que saco|para de encher|nao enche"
+      - "nao entende nada|ta de brincadeira com a minha cara"
+      - "nem devia ter chamado"
+    considera_negacao: false
+
+  - id: promessa-generica
+    tipo: promessa_indevida
+    descricao: Garantir entrega, durabilidade ou resultado que não dependem do vendedor
+    explicacao: >
+      Prometer o que não se pode garantir (prazo de entrega, nunca dar defeito, desempenho
+      perfeito) é propaganda enganosa e vira reclamação quando não se cumpre.
+    padroes:
+      - "(entrega|chega) (garantid\\w*|amanha com certeza|com certeza amanha)"
+      - "nunca (da|dá) defeito|nao quebra nunca|nunca quebra|nunca cai"
+      - "(100% garantid\\w*|garantid\\w* 100%)"
+      - "garantid\\w* 100% do tempo"
+
+  - id: enganosa-cancelamento-generico
+    tipo: informacao_enganosa
+    descricao: Esconder custo ou condição de cancelamento
+    explicacao: >
+      Afirmar que não há multa, fidelidade ou custo quando o contrato prevê é omissão de condição
+      importante. Se for verdade no seu caso, desative esta regra no playbook da empresa.
+    severidade: atencao
+    padroes:
+      - "cancela\\w* quando quiser,? sem (custo|multa)"
+      - "cancelamento e (na hora e )?sem multa"
+      - "nao paga nada,? nem precisa avisar"
+      - "nao tem fidelidade nenhuma|sem fidelidade nenhuma"
+      - "(preco|valor) (nao aumenta nunca|fixo pra sempre)"
+
+  # ------------------------------------------------------------------ sinais do cliente
+  - id: objecao-preco
+    tipo: objecao_preco
+    descricao: Cliente acha caro ou pede desconto
+    padroes:
+      - "\\b(caro|cara|carissimo|salgad\\w*)\\b"
+      - "nao cabe no (meu )?bolso|pesa (pra|para) mim|nao consigo pagar"
+      - "sem (grana|dinheiro)|(to|estou) apertad\\w*|contas atrasadas"
+      - "(tem como|da pra|consegue|faz) (fazer )?(um )?desconto|baixar o (valor|preco)"
+      - "melhorar (esse|o) (preco|valor)"
+
+  - id: objecao-confianca
+    tipo: objecao_confianca
+    descricao: Cliente desconfia da empresa ou da oferta
+    padroes:
+      - "\\bgolpe\\b"
+      - "reclame aqui|reclamac\\w* de voces"
+      - "nunca ouvi falar|nao conheco (voces|essa empresa|a empresa)"
+      - "como (eu )?sei que (isso )?e serio|pe atras|me arrependi|experiencia ruim"
+      - "(nao sei se|tenho medo de) (confio|fechar|cair)"
+      - "(tem|voces tem) cnpj"
+
+  - id: objecao-prazo
+    tipo: objecao_prazo
+    descricao: Cliente acha o prazo longo ou tem urgência
+    considera_negacao: false
+    padroes:
+      - "demora (muito|demais)|demora pra sair|isso ai demora"
+      - "(nao posso|nao da pra|nao quero) esperar"
+      - "tenho urgencia|preciso (disso )?(pra|para) (agora|ja)"
+      - "prazo (muito )?longo|tempo demais|preso tanto tempo|esperar anos"
+
+  - id: objecao-vou-pensar
+    tipo: objecao_vou_pensar
+    descricao: Cliente adia a decisão
+    padroes:
+      - "vou pensar|deixa eu pensar|pensar melhor|pensar com calma"
+      - "(vou|preciso|tenho que) (ver|falar|conversar) com (meu|minha) (marido|esposa|mulher|familia|socio)"
+      - "vou falar com minha familia|vou conversar com minha"
+      - "depois (eu )?(te )?(chamo|falo|retorno|vejo)|mais pra frente"
+      - "nao quero decidir agora|nao (to|estou) com pressa de fechar"
+
+  - id: objecao-concorrente
+    tipo: objecao_concorrente
+    descricao: Cliente compara com concorrente
+    padroes:
+      - "\\b(na|no) (caixa|concorrencia|outra|outro|banco)\\b.{0,30}(mais barat|melhor|em conta)"
+      - "mais (barato|em conta) em outro lugar"
+      - "(proposta|cotacao|oferta) (da|do) (outra|outro|concorrencia|caixa|banco)"
+      - "fiz cotacao|cotacao em mais"
+      - "(meu|o) banco (me )?ofereceu|oferta melhor"
+      - "(tambem )?(to|estou) vendo com (a|o) "
+
+  - id: objecao-cancelamento
+    tipo: objecao_cancelamento
+    descricao: Cliente pergunta como cancelar ou desistir
+    padroes:
+      - "(e se|se) eu (quiser )?(desistir|cancelar|me arrepender)"
+      - "tem multa|multa (se|pra|para) cancelar|cancelar tem custo|quanto (eu )?perco"
+      - "quero cancelar|como (faco|faz) (pra|para) cancelar"
+
+  - id: pedido-documento
+    tipo: pedido_cliente
+    descricao: Cliente pede simulação, orçamento, proposta ou documento
+    padroes:
+      - "(manda|mande|envia|envie|passa|passe|enviar|mandar|passar|me manda|me envia|me passa) .{0,30}(simulac|orcamento|cotac|proposta|contrato|valores|pdf|regulamento|condic|apolice|documento|por escrito)"
+      - "(consegue|pode|poderia|faz|faca) .{0,25}(simulac|orcamento|cotac|proposta)"
+      - "quanto fica a parcela|qual (o )?valor (mensal|da parcela)"
+      - "(cade|ainda (to|estou) (esperando|aguardando)|fiquei aguardando|alguma novidade sobre)"
+      - "e ai,? conseguiu ver"
+
+  - id: sinal-de-compra
+    tipo: sinal_compra
+    descricao: Cliente mostra que quer comprar
+    padroes:
+      - "quero fechar|\\bfechado\\b|vamos fazer|pode seguir que eu quero"
+      - "(como|onde) (faco|faz) (pra|para) pagar|manda o link que eu (ja )?pago"
+      - "(onde|como) (eu )?assino|manda o contrato que eu assino"
+      - "(to|estou) decidid|qual o proximo passo|o que precisa pra comecar"
+      - "se eu assinar hoje|\\bbora\\b"
+
+divulgacoes_obrigatorias:
+  - id: condicoes-de-compra
+    descricao: Informar fidelidade, troca, garantia ou frete
+    padroes: ["fidelidade", "garantia", "\\btroca\\b", "frete", "codigo do consumidor", "7 dias"]
+
+objecoes:
+  - tipo: objecao_preco
+    boas_respostas:
+      - Entender o orçamento do cliente e mostrar uma opção que caiba, sem desvalorizar o produto.
+      - Comparar o custo total, não só a parcela.
+    evitar: [Dar desconto sem contrapartida, pressionar com "só hoje"]
+  - tipo: objecao_confianca
+    boas_respostas:
+      - Mostrar CNPJ, canais oficiais e o contrato antes de qualquer pagamento.
+    evitar: [Responder só "pode confiar", desqualificar a reclamação do cliente]
+  - tipo: objecao_vou_pensar
+    boas_respostas:
+      - Respeitar o tempo do cliente, perguntar o que pesa na decisão e combinar um retorno.
+    evitar: [Pressionar, dizer que a condição acaba hoje]
+
+boas_praticas:
+  - Responder rápido em horário comercial e retomar quem parou de responder.
+  - Atender todo pedido (simulação, proposta, documento) ou dizer quando vai atender.
+  - Pagamento só pelos canais oficiais da empresa.

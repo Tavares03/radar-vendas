@@ -13,6 +13,7 @@ import json
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from functools import cache
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -64,10 +65,24 @@ def family_splits() -> dict[str, frozenset[str]]:
     return assignment
 
 
+#: Módulos cujo código decide o conteúdo do dataset.
+_GENERATOR_MODULES = ("generator", "render", "noise", "fake", "profiles", "challenge", "model")
+
+
+def generator_sources() -> str:
+    """Código-fonte do gerador (entra no hash da versão do dataset)."""
+    package = resources.files("radar_synth")
+    texts = [package.joinpath(f"{n}.py").read_text(encoding="utf-8") for n in _GENERATOR_MODULES]
+    texts.append(package.joinpath("challenge.yaml").read_text(encoding="utf-8"))
+    return "\n".join(texts)
+
+
 @cache
 def dataset_version() -> str:
-    """``<esquema>+<hash>``: muda quando o gerador ou qualquer banco de templates muda."""
-    content = "\n".join([__version__, *(load_bank(s).version_text for s in SECTORS)])
+    """``<esquema>+<hash>``: muda quando o código do gerador ou qualquer banco muda."""
+    content = "\n".join(
+        [__version__, generator_sources(), *(load_bank(s).version_text for s in SECTORS)]
+    )
     return f"{SCHEMA_VERSION}+{_hash(content)[:10]}"
 
 

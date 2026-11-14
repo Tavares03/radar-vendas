@@ -1,0 +1,50 @@
+# Clínicas (estética e odontologia): resultado varia, avaliação é obrigatória e riscos precisam
+# ser informados. Os conselhos profissionais proíbem prometer resultado.
+
+id: clinica
+nome: Clínica (estética e odontologia)
+versao: 1
+herda: generico
+descricao: Clínicas de estética, odontologia e procedimentos eletivos.
+
+regras:
+  - id: promessa-resultado
+    tipo: promessa_indevida
+    severidade: critico
+    descricao: Prometer resultado, ausência de dor ou de risco, ou efeito definitivo
+    explicacao: >
+      O resultado de procedimentos de saúde varia de pessoa para pessoa e depende de avaliação.
+      Os códigos de ética do CFO e do CFM proíbem garantir resultado, e "risco zero" não existe.
+    padroes:
+      - "resultado garantid"
+      - "(fica|vai ficar) (igualzinho|igual|perfeito)"
+      - "100% de (satisfacao|resultado)"
+      - "(zero|sem) dor garantid|nao doi nada"
+      - "risco zero|mais seguro que tomar"
+      - "e definitivo|dura a vida inteira|nunca mais precisa"
+      - "nunca falhou"
+    considera_negacao: true
+
+  - id: dispensa-avaliacao
+    tipo: informacao_enganosa
+    descricao: Dispensar avaliação ou negar efeitos colaterais
+    explicacao: >
+      A avaliação profissional é obrigatória e todo procedimento tem contraindicações. Dizer o
+      contrário omite informação essencial à saúde do paciente.
+    padroes:
+      - "nao precisa de avaliacao|avaliacao e so burocracia|pode pular"
+      - "nao tem efeito colateral|nao tem contraindicacao|qualquer um pode fazer"
+      - "manutencao e gratis|ja inclui tudo,? nao tem mais nada"
+    considera_negacao: false
+
+divulgacoes_obrigatorias:
+  - id: resultado-varia
+    descricao: Explicar que o resultado varia e depende da avaliação
+    padroes: ["resultado varia", "cada caso", "depende da avaliacao", "cada organismo"]
+  - id: riscos
+    descricao: Informar riscos e contraindicações
+    padroes: ["risco", "contraindica", "consentimento"]
+
+boas_praticas:
+  - Agendar avaliação antes de qualquer orçamento fechado.
+  - Explicar riscos e cuidados; não prometer resultado.

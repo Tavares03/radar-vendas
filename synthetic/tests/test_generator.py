@@ -184,6 +184,27 @@ def test_demora_conta_so_minutos_do_horario_comercial():
     assert business_minutes(datetime(2025, 3, 8, 10, 0), datetime(2025, 3, 8, 15, 0)) == 0  # sábado
 
 
+def test_follow_up_ausente_segue_a_mesma_definicao_da_metrica_do_radar():
+    from datetime import timedelta
+
+    for seed in range(150):
+        conversation = generate_conversation(seed=seed, sector="generico")
+        messages = conversation.messages
+        customer = [m for m in messages if m.sender == "cliente"]
+        expected = False
+        if customer:
+            last = customer[-1]
+            trailing = [m for m in messages[last.index + 1 :] if m.sender == "vendedor"]
+            followed = any(m.timestamp - last.timestamp >= timedelta(hours=20) for m in trailing)
+            closed = last.act in ("cliente.agradece", "cliente.desiste")
+            silence = conversation.exported_at - last.timestamp
+            expected = (
+                bool(trailing) and not followed and not closed and silence >= timedelta(hours=48)
+            )
+        flagged = any(a.type == "follow_up_ausente" for a in conversation.expected_alerts)
+        assert flagged == expected, conversation.id
+
+
 def test_ida_e_volta_pelo_dicionario():
     conversation = generate_conversation(seed=12, sector="seguros")
     assert SynthConversation.from_dict(conversation.to_dict()).to_dict() == conversation.to_dict()

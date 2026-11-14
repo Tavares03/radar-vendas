@@ -84,6 +84,12 @@ class Conversation(IdMixin, TimestampMixin, TenantScoped, Base):
     raw_purged_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     media_purged_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
 
+    #: Resumo da análise mais recente (para listar e filtrar sem juntar tabelas).
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_severity: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    open_alerts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    analyzed_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+
     seller: Mapped[Seller | None] = relationship(lazy="joined")
     messages: Mapped[list[Message]] = relationship(
         back_populates="conversation",

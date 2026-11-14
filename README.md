@@ -94,6 +94,12 @@ localmente (faster-whisper); identifica quem é o vendedor pelo cadastro, pelo t
 ou pelo conteúdo — e avisa quando ficou em dúvida. Reenviar o mesmo arquivo não duplica nada, e
 um export mais novo da mesma conversa só acrescenta as mensagens que faltam.
 
+Cada conversa importada é mascarada e analisada automaticamente. O resultado sai em
+`GET /api/v1/conversations/{id}/analysis` (nota com critérios explicados, resumo, sugestão de
+próxima mensagem e alertas com o trecho exato) e os alertas de todas as conversas ficam na fila
+`GET /api/v1/alerts`, onde o gestor marca falso positivo, atribui responsável e anota. O que é
+risco em cada setor está nos [playbooks](docs/PLAYBOOKS.md), editáveis sem programar.
+
 Sistemas próprios (CRM, N8N) podem mandar conversas em JSON para `POST /api/v1/conversations`.
 Os tokens de integração são criados em `POST /api/v1/api-tokens`.
 
@@ -155,6 +161,7 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 - [Registro de decisões](docs/DECISOES.md)
 - [LGPD e privacidade](docs/LGPD.md)
 - [Dados sintéticos](docs/DADOS-SINTETICOS.md)
+- [Como escrever um playbook](docs/PLAYBOOKS.md)
 - [Como contribuir](CONTRIBUTING.md)
 - [Política de segurança](SECURITY.md)
 

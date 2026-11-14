@@ -13,6 +13,8 @@ from sqlalchemy import ColumnElement, select
 from radar.api.deps import DbDep, SettingsDep, request_meta, require
 from radar.api.errors import BadRequest, Forbidden, NotFound
 from radar.api.paging import paginate
+from radar.api.routers.alerts import alert_out
+from radar.api.schemas.analysis import AnalysisOut, CriterionOut
 from radar.api.schemas.common import Message as MessageResponse
 from radar.api.schemas.common import Page, Pagination, pagination
 from radar.api.schemas.conversations import (
@@ -23,8 +25,9 @@ from radar.api.schemas.conversations import (
     ConversationUpdate,
 )
 from radar.auth.principal import Permission, Principal
-from radar.db.models import Conversation, Message, Seller, Tenant
+from radar.db.models import Alert, Conversation, Message, Seller, Tenant
 from radar.ingest import ParticipantInfo
+from radar.services.analysis import current_analysis
 from radar.services.audit import AuditAction, record_audit
 from radar.services.conversations import (
     can_reveal,
@@ -265,6 +268,51 @@ def get_conversation(
         revealed=reveal,
         customer_name=conversation.customer_name if reveal else None,
         raw_purged=conversation.raw_purged_at is not None,
+    )
+
+
+@router.get(
+    "/{conversation_id}/analysis", response_model=AnalysisOut, summary="Análise mais recente"
+)
+def get_analysis(conversation_id: uuid.UUID, db: DbDep, principal: ReaderDep) -> AnalysisOut:
+    """Nota explicável, resumo, sugestão de próxima mensagem e alertas com a evidência."""
+    conversation = _load(db, principal, conversation_id)
+    analysis = current_analysis(db, conversation.id)
+    if analysis is None:
+        raise NotFound("Esta conversa ainda não foi analisada.")
+    alerts = db.scalars(
+        select(Alert)
+        .where(Alert.conversation_id == conversation.id)
+        .order_by(Alert.message_index.is_(None), Alert.message_index, Alert.type)
+    ).all()
+    details = analysis.details or {}
+    return AnalysisOut(
+        id=analysis.id,
+        conversation_id=conversation.id,
+        created_at=analysis.created_at,
+        score=analysis.score,
+        playbook=analysis.playbook,
+        playbook_version=analysis.playbook_version,
+        summary=analysis.summary,
+        suggestion=analysis.suggestion,
+        sentiment=analysis.sentiment,
+        stage=analysis.stage,
+        layers=list(analysis.layers or []),
+        criteria=[CriterionOut(**c) for c in analysis.criteria or []],
+        alerts=[alert_out(a) for a in alerts],
+        objections=details.get("objections", []),
+        requests=details.get("requests", []),
+        metrics=details.get("metrics", {}),
+        strengths=details.get("strengths", []),
+        improvements=details.get("improvements", []),
+        llm={
+            "provider": analysis.llm_provider,
+            "model": analysis.llm_model,
+            "tokens_in": analysis.tokens_in,
+            "tokens_out": analysis.tokens_out,
+            "error": analysis.llm_error,
+        },
+        duration_ms=analysis.duration_ms,
     )
 
 

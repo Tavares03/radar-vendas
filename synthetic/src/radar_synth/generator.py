@@ -63,6 +63,8 @@ _PAIRED = {
 SLOW_REPLY_MINUTES = 60
 #: Silêncio do cliente (em horas) a partir do qual faltou follow-up do vendedor.
 FOLLOW_UP_HOURS = 48
+#: Mensagem do vendedor que conta como follow-up: enviada pelo menos este tempo depois do cliente.
+FOLLOW_UP_GAP = timedelta(hours=20)
 INJECTION_RATE = 0.04
 
 
@@ -115,7 +117,6 @@ class _Script:
         self.signals: list[tuple[int, bool]] = []
         self.injection: int | None = None
         self.slow_reply: int | None = None
-        self.followed_up = False
         self.used: dict[str, set[str]] = {}
         self.seller_display, self.customer_display = self._display_names()
 
@@ -414,7 +415,6 @@ class _Script:
                 self.say("vendedor.ack")
             if self.rng.random() < self.seller.follow_up:
                 self.wait_days(1, 3)
-                self.followed_up = True
                 self.say("vendedor.followup")
                 if self.rng.random() < 0.3:
                     self.say("cliente.retorno_atrasado")
@@ -452,12 +452,19 @@ class _Script:
             add("tentativa_manipulacao", self.injection)
         if self.slow_reply is not None:
             add("demora_resposta", self.slow_reply, f"mais de {SLOW_REPLY_MINUTES} min")
-        last = self.messages[-1]
-        silence = (exported_at - last.timestamp).total_seconds() / 3600
-        if outcome == Outcome.ESFRIOU and not self.followed_up and silence >= FOLLOW_UP_HOURS:
-            add("follow_up_ausente", None, f"cliente em silêncio há {int(silence)} h")
-            if self.requests or self.signals:
-                add("lead_esfriando", None, "cliente demonstrou interesse e sumiu")
+        # Mesma definição da métrica do Radar: o cliente parou de responder, o vendedor falou por
+        # último e não retomou o contato (nenhuma mensagem 20 h ou mais depois do cliente).
+        customer = [m for m in self.messages if m.sender == "cliente"]
+        if customer:
+            last = customer[-1]
+            trailing = [m for m in self.messages[last.index + 1 :] if m.sender == "vendedor"]
+            followed = any(m.timestamp - last.timestamp >= FOLLOW_UP_GAP for m in trailing)
+            closed = last.act in ("cliente.agradece", "cliente.desiste")
+            silence = (exported_at - last.timestamp).total_seconds() / 3600
+            if trailing and not followed and not closed and silence >= FOLLOW_UP_HOURS:
+                add("follow_up_ausente", None, f"cliente em silêncio há {int(silence)} h")
+                if self.requests or self.signals:
+                    add("lead_esfriando", None, "cliente demonstrou interesse e sumiu")
         return alerts
 
 
@@ -512,8 +519,11 @@ def generate_conversation(
     script.refund_details(outcome)
     script.closing(outcome)
 
+    # Conversa que esfriou é exportada dias depois; as demais, antes do prazo de follow-up.
     hours = (
-        rng.uniform(FOLLOW_UP_HOURS + 2, 240) if outcome == Outcome.ESFRIOU else rng.uniform(1, 72)
+        rng.uniform(FOLLOW_UP_HOURS + 2, 240)
+        if outcome == Outcome.ESFRIOU
+        else rng.uniform(1, FOLLOW_UP_HOURS - 10)
     )
     exported_at = script.clock + timedelta(hours=hours)
     return SynthConversation(

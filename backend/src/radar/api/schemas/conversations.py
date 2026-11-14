@@ -59,6 +59,12 @@ class ConversationOut(ApiModel):
     customer_message_count: int
     audio_count: int
     created_at: datetime
+    #: Nota da análise mais recente (``None`` enquanto não foi analisada).
+    score: int | None = None
+    #: Severidade mais alta entre os alertas em aberto.
+    max_severity: str | None = None
+    open_alerts: int = 0
+    analyzed_at: datetime | None = None
 
 
 class ParticipantOut(BaseModel):

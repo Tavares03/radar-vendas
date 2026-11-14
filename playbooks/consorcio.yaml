@@ -1,0 +1,91 @@
+# Consórcio: a contemplação só acontece por sorteio ou lance. Prometer data, garantia ou "cota
+# contemplada" é proibido e é a principal origem de reclamação no Banco Central e no Procon.
+
+id: consorcio
+nome: Consórcio
+versao: 1
+herda: generico
+descricao: >
+  Administradoras e representantes de consórcio (imóvel, veículo, serviços). Foco em promessa de
+  contemplação, omissão da taxa de administração e regras de desistência.
+
+regras:
+  - id: promessa-contemplacao
+    tipo: promessa_indevida
+    severidade: critico
+    descricao: Prometer contemplação, data de contemplação ou cota já contemplada
+    explicacao: >
+      A contemplação só acontece por sorteio ou lance (Lei 11.795/2008). Ninguém pode garantir
+      quando o cliente será contemplado; prometer isso é propaganda enganosa e motivo frequente de
+      reclamação e de devolução de valores na Justiça.
+    padroes:
+      - "contempla\\w*( (e|esta|ta|fica))? garantid"
+      - "garant\\w*( que)?( (a|sua|tua|o|voce|vc|seu))* (contempla|sai contemplad|e contemplad|vai ser contemplad)"
+      - "(vai ser|sera|sai|e|fica|vai sair) contemplad\\w* (ja |logo )?(no|na|em|ate|dentro de) (o )?(primeiro|segundo|terceiro|quarto|quinto|\\d+|poucos)"
+      - "contemplad\\w* (com|na) (certeza|toda certeza)"
+      - "cota (ja )?contemplada (separada|reservada|pra voce|para voce)"
+      - "em \\d+ (dias|meses) (voce )?(esta|ta|fica|sai) com a carta"
+      - "(todo mundo|sempre) sai contemplad|sai rapidinho"
+      - "no seu caso vai ser logo"
+      - "(lance|dando esse lance).{0,40}(nao tem erro|com certeza|garantid)"
+
+  - id: omissao-taxa
+    tipo: informacao_enganosa
+    descricao: Negar ou esconder a taxa de administração e o fundo de reserva
+    explicacao: >
+      Todo consórcio tem taxa de administração (e, em geral, fundo de reserva). Dizer que não há
+      taxa ou que o cliente paga só o crédito é omissão de condição essencial.
+    padroes:
+      - "(nao tem|sem|zero|nenhuma) taxa"
+      - "taxa (de administracao )?(nao tem|nenhuma|zero)"
+      - "(voce )?(so )?paga (so|somente|apenas) o (valor da carta|credito)"
+      - "^nenhuma!? voce so paga"
+    considera_negacao: false
+
+  - id: igual-financiamento
+    tipo: informacao_enganosa
+    descricao: Apresentar consórcio como financiamento ou empréstimo imediato
+    explicacao: >
+      Consórcio não é financiamento: o crédito só é liberado na contemplação. Dizer que "sai na
+      hora" engana o cliente sobre o produto.
+    padroes:
+      - "(igual|como|funciona como) (financiamento|emprestimo)"
+      - "(credito|dinheiro) sai na hora|aprovou ja sai"
+
+  - id: desistencia-devolucao-imediata
+    tipo: informacao_enganosa
+    descricao: Prometer devolução imediata e sem multa na desistência
+    explicacao: >
+      Na desistência, a restituição segue o contrato (em geral na contemplação da cota excluída
+      ou no encerramento do grupo) e pode haver multa. Prometer devolução na hora é enganoso.
+    padroes:
+      - "devolvo tudo na hora|recebe tudo de volta no mesmo mes"
+      - "desist\\w*.{0,30}(devolv|recebe).{0,20}(na hora|tudo|sem multa)"
+
+divulgacoes_obrigatorias:
+  - id: taxa-administracao
+    descricao: Explicar a taxa de administração
+    padroes: ["taxa de administra"]
+  - id: fundo-reserva
+    descricao: Explicar o fundo de reserva
+    padroes: ["fundo de reserva"]
+  - id: sorteio-lance
+    descricao: Explicar que a contemplação é por sorteio ou lance
+    padroes: ["sorteio", "\\blance"]
+  - id: regras-desistencia
+    descricao: Explicar as regras de desistência e restituição
+    padroes: ["desist", "restitui", "cancelament"]
+
+objecoes:
+  - tipo: objecao_prazo
+    boas_respostas:
+      - Explicar honestamente que a contemplação pode acontecer em qualquer mês e mostrar como o lance aumenta as chances, sem garantir.
+    evitar: [Prometer contemplação em data certa]
+  - tipo: objecao_cancelamento
+    boas_respostas:
+      - Mostrar a cláusula de desistência do regulamento e explicar quando o valor é devolvido.
+    evitar: [Dizer que devolve tudo na hora]
+
+boas_praticas:
+  - Explicar taxa de administração, fundo de reserva, sorteio e lance antes da adesão.
+  - Nunca vender "cota contemplada" ou prometer data de contemplação.

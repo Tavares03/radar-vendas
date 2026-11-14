@@ -47,6 +47,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   amostragem, pacote para o Hugging Face com dataset card, e ferramentas de paráfrase e conjunto
   fora de distribuição com LLM gratuito.
 - Severidade padrão de cada tipo de alerta na taxonomia compartilhada.
+- Playbooks em YAML para genérico, consórcio, seguros, imobiliária e clínica, com herança,
+  validação explicada e motor de regras que ignora negação, citação e refutação.
+- Análise em camadas (regras → classificador → métricas → LLM) com fusão auditável, grounding
+  das evidências do LLM, detecção de tentativa de manipulação e nota explicável calculada.
+- Camada de LLM com failover entre Groq, Gemini, OpenRouter e Ollama, retry, limite de taxa,
+  circuit breaker, cache e saída estruturada com reparo; texto sem máscara nunca vai para nuvem.
+- Tabelas `analyses`, `alerts`, `stage_metrics` e `playbooks`; etapa de análise no pipeline;
+  `GET /api/v1/conversations/{id}/analysis`, fila `/api/v1/alerts` com revisão (status,
+  responsável, nota) que sobrevive à reanálise e `/api/v1/playbooks` (listar, ver, salvar,
+  excluir e testar regras).
 
 ### Corrigido
 - Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).

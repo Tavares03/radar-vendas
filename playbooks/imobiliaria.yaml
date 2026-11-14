@@ -1,0 +1,53 @@
+# Imobiliária: crédito depende da análise do banco; ITBI, cartório, condomínio e IPTU precisam
+# ser informados; valorização não pode ser prometida.
+
+id: imobiliaria
+nome: Imobiliária
+versao: 1
+herda: generico
+descricao: Imobiliárias, corretores e incorporadoras (venda e lançamento).
+
+regras:
+  - id: promessa-aprovacao-valorizacao
+    tipo: promessa_indevida
+    severidade: critico
+    descricao: Garantir aprovação de financiamento, valorização ou renda de aluguel
+    explicacao: >
+      A aprovação do crédito é decisão do banco depois da análise, e valorização ou aluguel não
+      podem ser garantidos. Prometer isso é propaganda enganosa (CDC, art. 37).
+    padroes:
+      - "(financiamento|credito)( (esta|ta|e|sai|ja esta))? (aprovad\\w*|garantid\\w*)"
+      - "aprovacao garantida"
+      - "(banco )?aprova com certeza"
+      - "valoriz\\w* \\d+%.{0,25}(certeza|garantid)"
+      - "(dobrar|dobra) o (seu )?dinheiro"
+      - "garanto (inquilino|renda|aluguel)|aluga em uma semana"
+
+  - id: omissao-custos-imovel
+    tipo: informacao_enganosa
+    descricao: Esconder custos (ITBI, cartório, condomínio, IPTU) ou a situação do imóvel
+    explicacao: >
+      ITBI, escritura, registro, condomínio e IPTU fazem parte do custo real. Negar esses custos
+      ou dispensar a checagem da matrícula engana o comprador.
+    padroes:
+      - "nao tem nenhum custo alem"
+      - "nao precisa pagar nada disso"
+      - "nao precisa nem olhar a matricula|sem certidao"
+      - "condominio (ja )?(esta )?incluso"
+      - "iptu e isento"
+    considera_negacao: false
+
+divulgacoes_obrigatorias:
+  - id: custos-transacao
+    descricao: Informar ITBI, escritura e registro
+    padroes: ["itbi", "cartorio", "escritura"]
+  - id: condominio-iptu
+    descricao: Informar condomínio e IPTU
+    padroes: ["condominio", "iptu"]
+  - id: aprovacao-banco
+    descricao: Explicar que o financiamento depende da análise do banco
+    padroes: ["analise de credito", "depende d[ao] (analise do )?banco", "quem decide e o banco"]
+
+boas_praticas:
+  - Mostrar a matrícula atualizada e as certidões antes da proposta.
+  - Nunca garantir aprovação de crédito ou valorização.

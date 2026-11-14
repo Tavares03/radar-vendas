@@ -11,15 +11,17 @@ import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from radar.config import Settings, get_settings
-from radar.db.models import Conversation, Message
+from radar.db.models import Conversation, Message, StageMetric
 from radar.db.session import session_scope
 from radar.logs import get_logger
 from radar.observability import PIPELINE_STAGE_DURATION
+from radar.services.analysis import analysis_stage
 from radar.services.ingestion import data_path
 from radar.services.privacy import privacy_stage
 from radar.taxonomy import ConversationStatus, TranscriptionStatus
@@ -27,7 +29,8 @@ from radar.transcription import AudioTooLong, TranscriptionError, get_transcribe
 
 log = get_logger(__name__)
 
-Stage = Callable[[Session, Conversation, Settings], None]
+#: Uma etapa pode devolver extras para a métrica (``provider``, ``tokens_in``, ``tokens_out``).
+Stage = Callable[[Session, Conversation, Settings], dict[str, Any] | None]
 
 
 def transcribe_stage(db: Session, conversation: Conversation, settings: Settings) -> None:
@@ -72,6 +75,7 @@ def transcribe_stage(db: Session, conversation: Conversation, settings: Settings
 STAGES: list[tuple[str, Stage]] = [
     ("transcricao", transcribe_stage),
     ("privacidade", privacy_stage),
+    ("analise", analysis_stage),
 ]
 
 
@@ -105,8 +109,9 @@ def process_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> No
         for name, stage in list(STAGES):
             started = time.perf_counter()
             outcome = "ok"
+            extra: dict[str, Any] = {}
             try:
-                stage(db, conversation, settings)
+                extra = stage(db, conversation, settings) or {}
                 db.commit()
             except Exception:
                 db.rollback()
@@ -114,9 +119,21 @@ def process_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> No
                 failed.append(name)
                 log.exception("etapa_falhou", etapa=name, conversation_id=str(conversation_id))
             finally:
-                PIPELINE_STAGE_DURATION.labels(stage=name, status=outcome).observe(
-                    time.perf_counter() - started
+                elapsed = time.perf_counter() - started
+                PIPELINE_STAGE_DURATION.labels(stage=name, status=outcome).observe(elapsed)
+                db.add(
+                    StageMetric(
+                        tenant_id=tenant_id,
+                        conversation_id=conversation_id,
+                        stage=name,
+                        status=outcome,
+                        duration_ms=int(elapsed * 1000),
+                        provider=str(extra.get("provider", ""))[:40],
+                        tokens_in=int(extra.get("tokens_in", 0)),
+                        tokens_out=int(extra.get("tokens_out", 0)),
+                    )
                 )
+                db.commit()
 
         conversation = db.get(Conversation, conversation_id)
         if conversation is None:

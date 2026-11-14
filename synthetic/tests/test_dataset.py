@@ -98,6 +98,20 @@ def test_todo_tipo_de_dado_pessoal_aparece_em_todos_os_splits():
         assert found == set(PII_TYPES), (split, set(PII_TYPES) - found)
 
 
+def test_versao_muda_quando_o_codigo_do_gerador_muda(monkeypatch):  # type: ignore[no-untyped-def]
+    from radar_synth import dataset
+
+    original = dataset.dataset_version()
+    sources = dataset.generator_sources()
+    monkeypatch.setattr(dataset, "generator_sources", lambda: sources + "\n# mudança")
+    dataset.dataset_version.cache_clear()
+    try:
+        assert dataset.dataset_version() != original
+    finally:
+        monkeypatch.undo()
+        dataset.dataset_version.cache_clear()
+
+
 def test_cpfs_do_dataset_sao_validos():
     for conversation in build_dataset(sizes=SIZES, seed=4):
         for message in conversation.messages:

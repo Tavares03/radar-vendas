@@ -1,0 +1,57 @@
+# Seguros: cobertura, franquia, carência e exclusões precisam ser claras. Quem decide o
+# sinistro é a seguradora, depois da análise.
+
+id: seguros
+nome: Seguros
+versao: 1
+herda: generico
+descricao: Corretoras e seguradoras (auto, vida, residencial).
+
+regras:
+  - id: promessa-cobertura-total
+    tipo: promessa_indevida
+    severidade: critico
+    descricao: Prometer cobertura total ou pagamento garantido de sinistro
+    explicacao: >
+      Toda apólice tem franquia, carência e exclusões, e o sinistro passa por análise da
+      seguradora. Garantir que "cobre tudo" ou que o sinistro será pago é promessa enganosa
+      (normas da SUSEP sobre informação ao consumidor).
+    padroes:
+      - "cobre (tudo|qualquer coisa|todo tipo)"
+      - "(sinistro|indenizac\\w*) (aprovad\\w*|pag\\w*) (na hora|garantid\\w*|com certeza)"
+      - "(eles |a seguradora )?(pagam|paga) 100%"
+      - "sem excecao"
+      - "(doenca|problema) que (voce )?ja tem cobre"
+      - "nem precisa declarar|nao precisa falar d"
+
+  - id: omissao-franquia-carencia
+    tipo: informacao_enganosa
+    descricao: Negar franquia, carência ou custo de cancelamento
+    explicacao: >
+      Dizer que não há franquia ou carência quando a apólice prevê é omitir condição essencial.
+    padroes:
+      - "(nao tem|sem|nenhuma) (franquia|carencia)"
+      - "franquia\\?? aqui nao|carencia nenhuma"
+      - "devolvo o ano inteiro|recebe tudo de volta,? sem desconto"
+    considera_negacao: false
+
+divulgacoes_obrigatorias:
+  - id: franquia
+    descricao: Informar o valor da franquia
+    padroes: ["franquia"]
+  - id: carencia-exclusoes
+    descricao: Informar carência e exclusões
+    padroes: ["carencia", "exclus", "nao (e|sao) cobert"]
+  - id: condicoes-gerais
+    descricao: Enviar ou citar as condições gerais da apólice
+    padroes: ["condicoes gerais", "apolice"]
+
+objecoes:
+  - tipo: objecao_preco
+    boas_respostas:
+      - Ajustar coberturas e franquia ao orçamento, explicando o que muda em cada opção.
+    evitar: [Tirar cobertura sem avisar o cliente]
+
+boas_praticas:
+  - Explicar franquia, carência e exclusões antes de fechar.
+  - Nunca dizer que o sinistro está garantido.

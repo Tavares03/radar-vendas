@@ -15,12 +15,14 @@ from radar import __version__
 from radar.api.errors import install_error_handlers
 from radar.api.middleware import BodyLimitMiddleware, RequestContextMiddleware
 from radar.api.routers import (
+    alerts,
     api_tokens,
     audit,
     auth,
     conversations,
     health,
     imports,
+    playbooks,
     privacy,
     sellers,
     tenant,
@@ -58,6 +60,8 @@ TAGS = [
         "name": "privacidade",
         "description": "LGPD: localizar, exportar e excluir dados de um titular; retenção.",
     },
+    {"name": "alertas", "description": "Fila de alertas: riscos e oportunidades com evidência."},
+    {"name": "playbooks", "description": "Regras por setor em YAML, padrão ou da empresa."},
     {"name": "integrações", "description": "Tokens de API, webhooks e canais de alerta."},
     {"name": "auditoria", "description": "Trilha de auditoria."},
 ]
@@ -129,6 +133,8 @@ def create_app() -> FastAPI:
         sellers,
         imports,
         conversations,
+        alerts,
+        playbooks,
         privacy,
         api_tokens,
         audit,
