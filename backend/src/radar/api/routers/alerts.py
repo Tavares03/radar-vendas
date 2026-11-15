@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel
 from sqlalchemy import ColumnElement, case, select
 
 from radar.api.deps import DbDep, request_meta, require
@@ -31,6 +32,9 @@ _SEVERITY_ORDER = case({"critico": 0, "atencao": 1, "info": 2}, value=Alert.seve
 def alert_out(alert: Alert) -> AlertOut:
     out = AlertOut.model_validate(alert)
     out.label = label_pt(alert.type)
+    if alert.message is not None:
+        text = alert.message.text_masked or ""
+        out.message_text = text if len(text) <= 600 else text[:599] + "…"
     out.customer_label = alert.conversation.customer_label
     out.seller_name = alert.conversation.seller.display_name if alert.conversation.seller else None
     return out
@@ -86,6 +90,20 @@ def list_alerts(
     return Page[AlertOut](
         items=[alert_out(row) for row in rows], total=total, limit=page.limit, offset=page.offset
     )
+
+
+class AssigneeOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    role: str
+
+
+@router.get("/assignees", response_model=list[AssigneeOut], summary="Quem pode receber um alerta")
+def list_assignees(db: DbDep, principal: ReviewerDep) -> list[AssigneeOut]:
+    """Pessoas ativas da empresa, só com nome e papel: quem revisa alertas precisa escolher um
+    responsável sem ter acesso à administração de usuários."""
+    rows = db.scalars(select(User).where(User.is_active.is_(True)).order_by(User.name)).all()
+    return [AssigneeOut(id=u.id, name=u.name, role=u.role.value) for u in rows]
 
 
 @router.get("/{alert_id}", response_model=AlertOut, summary="Ver um alerta")

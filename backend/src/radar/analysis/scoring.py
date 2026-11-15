@@ -122,11 +122,12 @@ def score_conversation(
     if disclosures:
         given = [d for d, index in disclosures.items() if index is not None]
         value = len(given) / len(disclosures)
-        missing = [d for d, index in disclosures.items() if index is None]
+        descriptions = {d.id: d.descricao for d in playbook.divulgacoes_obrigatorias}
+        missing = [descriptions.get(d, d) for d, index in disclosures.items() if index is None]
         text = (
             "Todas as informações obrigatórias foram dadas."
             if not missing
-            else f"Faltou informar: {', '.join(missing)}."
+            else f"Faltou: {'; '.join(missing)}."
         )
     else:
         value, text = 1.0, "O playbook não exige informações obrigatórias."

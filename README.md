@@ -77,6 +77,33 @@ docker compose exec api radar create-tenant "Minha Empresa"
 docker compose exec api radar create-user minha-empresa voce@empresa.com.br --name "Você"
 ```
 
+### Experimentar com dados de demonstração
+
+```bash
+docker compose exec api radar seed-demo
+```
+
+O comando pede uma senha (10 caracteres ou mais) e cria a empresa "Demonstração" com dez
+conversas sintéticas já analisadas (consórcio, seguros, imobiliária, clínica e genérico) e três
+usuários: `admin@demo.radar`, `gestor@demo.radar` e `vendedor@demo.radar`. Entre no painel com
+cada um para ver o que cada papel enxerga. Todas as pessoas e empresas das conversas são
+inventadas; o comando se recusa a rodar com `RADAR_ENVIRONMENT=prod`.
+
+### O painel
+
+| Página | Para quê |
+|---|---|
+| Visão geral | o que pede atenção agora: alertas críticos com o trecho, nota média, tendência das últimas 8 semanas e a equipe da pior para a melhor nota |
+| Alertas | fila com filtros (severidade, status, tipo, vendedor); revisar, marcar falso positivo, atribuir responsável e anotar sem sair da lista |
+| Conversas | importar exports e abrir cada conversa no estilo do WhatsApp, com o trecho de cada alerta marcado na cor da severidade e a nota explicada ao lado |
+| Vendedores | nota, evolução semanal, objeções que mais custam, alertas em aberto e pontos a melhorar de cada pessoa |
+| Playbooks | ver, editar e testar as regras do setor antes de salvar |
+| Configurações | fuso, horário comercial, tempo de resposta esperado, retenção de dados e usuários |
+
+Dado pessoal aparece sempre como tarja (`[CPF]`, `[TELEFONE]`…). Quem tem permissão pode revelar
+o texto original de uma conversa, e isso fica na trilha de auditoria. O vendedor vê só as
+próprias conversas e alertas.
+
 ### Enviando conversas
 
 No WhatsApp, abra a conversa → **Mais** → **Exportar conversa** (com ou sem mídia). Envie o
@@ -130,8 +157,15 @@ uv run mypy backend/src synthetic/src evals/src
 uv run radar init-db
 uv run uvicorn --factory radar.api.app:create_app --reload
 
-# Painel
+# Painel (o proxy /api aponta para http://127.0.0.1:8000)
 cd frontend && npm install && npm run dev
+npm run lint && npm run typecheck && npm test
+```
+
+Ao mudar um endpoint, regenere o contrato que o painel usa (um teste compara os dois):
+
+```bash
+uv run python scripts/export_openapi.py && (cd frontend && npm run api:types)
 ```
 
 Para rodar os testes também em PostgreSQL (como a CI faz):
@@ -148,7 +182,7 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 | Pasta | O que tem |
 |---|---|
 | [`backend/`](backend) | pacote `radar`: API FastAPI, worker, e toda a lógica de análise |
-| [`frontend/`](frontend) | painel em Next.js |
+| [`frontend/`](frontend) | painel em Next.js ([como está organizado](frontend/README.md)) |
 | [`synthetic/`](synthetic) | gerador de conversas sintéticas anotadas |
 | [`training/`](training) | treino e avaliação dos modelos próprios |
 | [`evals/`](evals) | avaliação do sistema inteiro |

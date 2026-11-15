@@ -111,6 +111,38 @@ def retention_run(
         )
 
 
+@app.command("seed-demo")
+def seed_demo_cmd(
+    password: Annotated[
+        str,
+        typer.Option(
+            prompt=True, hide_input=True, help="Senha dos usuários da demonstração (10+ caracteres)"
+        ),
+    ] = "",
+) -> None:
+    """Cria a empresa "Demonstração" com as conversas sintéticas de exemplo."""
+    from radar.services.demo import DEMO_USERS, seed_demo
+
+    settings = get_settings()
+    if settings.environment == "prod":
+        typer.secho(
+            "A demonstração não pode ser carregada em produção.", fg=typer.colors.RED, err=True
+        )
+        raise typer.Exit(code=1)
+    init_storage(settings)
+    try:
+        result = seed_demo(settings, password=password)
+    except AccountError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+    if not result.created:
+        typer.echo("A empresa de demonstração já existe; nada foi alterado.")
+        return
+    typer.echo(f"Demonstração pronta com {result.conversations} conversas. Entre com:")
+    for email, _name, role in DEMO_USERS:
+        typer.echo(f"  {email} ({role.value})")
+
+
 @app.command()
 def bootstrap() -> None:
     """Prepara o primeiro uso: pastas, admin inicial (se configurado no .env) e dados da demo."""

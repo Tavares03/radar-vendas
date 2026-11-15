@@ -57,8 +57,26 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   `GET /api/v1/conversations/{id}/analysis`, fila `/api/v1/alerts` com revisão (status,
   responsável, nota) que sobrevive à reanálise e `/api/v1/playbooks` (listar, ver, salvar,
   excluir e testar regras).
+- Painel web: visão geral, fila de alertas com revisão em linha, visualizador de conversa no
+  estilo do WhatsApp com o trecho de cada alerta marcado na cor da severidade e a nota explicada
+  ao lado, página por vendedor, editor e teste de playbooks e configurações da empresa. Dado
+  pessoal aparece como tarja; revelar o original pede confirmação e fica auditado. Funciona no
+  celular.
+- `GET /api/v1/overview` e `GET /api/v1/sellers/{id}/performance` (nota média, tendência
+  semanal, alertas por tipo, objeções por desfecho, critérios e pontos a melhorar).
+- `GET /api/v1/alerts/assignees`: quem pode receber um alerta, para quem revisa sem gerir
+  usuários. Cada alerta traz o texto mascarado da mensagem, para mostrar a evidência no contexto.
+- `radar seed-demo`: empresa de demonstração com as conversas sintéticas de exemplo e usuários
+  admin, gestor e vendedor.
+- Cliente do painel tipado a partir do OpenAPI da API, com teste que impede o contrato de ficar
+  desatualizado; testes de componente com Vitest e Testing Library.
+- `desativar` no playbook também vale para divulgações obrigatórias herdadas.
 
 ### Corrigido
 - Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).
 - Detector de dados pessoais: complemento "ap 41" no endereço, CNPJ alfanumérico sem formatação
   com contexto e chave PIX citada mais longe da palavra "pix".
+- Consórcio, seguros, imobiliária e clínica herdavam do genérico a divulgação de condições de
+  compra do varejo (fidelidade, troca, frete) e perdiam pontos de transparência por ela.
+- A justificativa de transparência listava os identificadores das divulgações em vez da
+  descrição em português.

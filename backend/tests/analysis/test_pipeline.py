@@ -105,6 +105,13 @@ def test_negacao_nao_gera_alerta_e_nota_alta():
     assert analysis.score >= 90
 
 
+def test_transparencia_explica_o_que_faltou_em_portugues():
+    analysis = analyze_conversation(conv([(C, "Oi"), (V, "A contemplação é por sorteio ou lance")]))
+    criterion = next(c for c in analysis.criteria if c.id == "transparencia")
+    assert "Explicar a taxa de administração" in criterion.justification
+    assert "taxa-administracao" not in criterion.justification
+
+
 def test_pedido_sem_resposta():
     analysis = analyze_conversation(
         conv(

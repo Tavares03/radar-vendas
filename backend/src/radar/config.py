@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     data_dir: Path = Path("./data")
     models_dir: Path = Path("./models")
     playbooks_dir: Path | None = None
+    #: Amostras sintéticas (demonstração). Padrão: ``data/samples`` do repositório.
+    samples_dir: Path | None = None
 
     # ------------------------------------------------------------ upload
     max_upload_mb: int = 200

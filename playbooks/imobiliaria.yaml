@@ -5,6 +5,8 @@ id: imobiliaria
 nome: Imobiliária
 versao: 1
 herda: generico
+# Fidelidade, troca e frete são do varejo: não valem para este setor.
+desativar: [condicoes-de-compra]
 descricao: Imobiliárias, corretores e incorporadoras (venda e lançamento).
 
 regras:

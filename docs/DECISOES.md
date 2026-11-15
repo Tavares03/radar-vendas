@@ -233,3 +233,45 @@ momento em que as mensagens chegaram ao Radar; para API e webhooks, é o momento
 tokens), além das métricas Prometheus.
 **Motivo:** custo e falhas por empresa e por conversa ficam consultáveis sem infraestrutura extra
 de observabilidade (requisito de custo zero).
+
+## D35 — Painel como SPA sobre a própria API
+**Decisão:** as páginas do Next são estáticas e finas; cada uma envolve um componente cliente
+num `Suspense`, que busca os dados no navegador com SWR por `/api/*` (repassado para a API pelo
+próprio Next). O servidor do Next nunca lê a sessão nem fala com o banco.
+**Alternativas:** Server Components buscando na API com o cookie repassado; BFF no Next.
+**Motivo:** uma fonte só de regra e permissão (a API), nada de segredo no servidor do Next, cookie
+first-party sem CORS e uma imagem do painel que é só arquivo estático mais um proxy.
+
+## D36 — Componentes próprios em vez de biblioteca de UI
+**Decisão:** botões, campos, etiquetas de severidade e a bolha de mensagem são componentes
+próprios com Tailwind; ícones do `lucide-react`.
+**Alternativas:** shadcn/ui, Radix, MUI.
+**Motivo:** o painel tem poucas peças e as importantes são específicas do domínio (marca-texto da
+evidência, tarja de dado pessoal, bolha do WhatsApp). Uma biblioteca traria peso e um visual
+genérico sem resolver nenhuma delas.
+
+## D37 — Contrato tipado gerado do OpenAPI
+**Decisão:** `scripts/export_openapi.py` grava o OpenAPI da API em
+`frontend/src/lib/api/openapi.json`; `openapi-typescript` gera os tipos e `openapi-fetch` os usa.
+Um teste do backend compara o arquivo com a API, e a CI confere se os tipos batem com o arquivo.
+**Alternativas:** tipos escritos à mão; gerar um SDK completo (orval, openapi-generator).
+**Motivo:** mudar um campo na API quebra o `tsc` do painel na hora, sem SDK gerado para manter.
+
+## D38 — Quem revisa alerta vê quem pode recebê-lo
+**Decisão:** `GET /api/v1/alerts/assignees` lista nome e papel dos usuários ativos para quem
+tem `alerts:review`; a lista completa de usuários continua exigindo `users:manage`.
+**Motivo:** o gestor precisa atribuir alertas, mas não precisa (nem deve) ver e-mails e gerir
+contas.
+
+## D39 — A evidência vem com a mensagem inteira, mascarada
+**Decisão:** cada alerta da fila traz o texto mascarado da mensagem onde está a evidência
+(até 600 caracteres), e o painel marca o trecho dentro dela.
+**Motivo:** um trecho solto ("contemplação garantida") não mostra se era promessa ou negação; a
+frase inteira mostra. O texto já é o mascarado, então não expõe dado pessoal.
+
+## D40 — `desativar` vale para divulgações obrigatórias
+**Decisão:** um playbook que herda pode desativar, pelo `id`, tanto regras quanto divulgações
+herdadas. Os setores desativam a divulgação de condições de compra do varejo, que vinha do
+genérico.
+**Motivo:** sem isso, toda clínica perdia pontos de transparência por não falar de frete e
+troca.

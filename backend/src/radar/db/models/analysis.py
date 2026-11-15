@@ -20,7 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from radar.db.base import Base, IdMixin, TenantScoped, TimestampMixin, utcnow
-from radar.db.models.conversations import Conversation
+from radar.db.models.conversations import Conversation, Message
 from radar.db.models.core import User
 from radar.db.types import JSONType, StrEnumType, UtcDateTime
 from radar.taxonomy import AlertStatus
@@ -103,6 +103,8 @@ class Alert(IdMixin, TimestampMixin, TenantScoped, Base):
     review_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
     conversation: Mapped[Conversation] = relationship(lazy="joined")
+    #: A mensagem de evidência, para mostrar o trecho em contexto (texto mascarado).
+    message: Mapped[Message | None] = relationship(lazy="joined")
     assigned_to: Mapped[User | None] = relationship(foreign_keys=[assigned_to_user_id], lazy="joined")
 
 

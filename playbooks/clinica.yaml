@@ -5,6 +5,8 @@ id: clinica
 nome: Clínica (estética e odontologia)
 versao: 1
 herda: generico
+# Fidelidade, troca e frete são do varejo: não valem para este setor.
+desativar: [condicoes-de-compra]
 descricao: Clínicas de estética, odontologia e procedimentos eletivos.
 
 regras:

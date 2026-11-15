@@ -30,6 +30,8 @@ class AlertOut(ApiModel):
     severity: str
     #: Trecho da mensagem, já mascarado.
     evidence: str
+    #: A mensagem inteira em que está a evidência (mascarada), para mostrar o trecho em contexto.
+    message_text: str | None = None
     explanation: str
     #: O que cada camada disse (regra, classificador, LLM, métrica).
     sources: dict[str, Any]

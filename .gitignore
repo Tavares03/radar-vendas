@@ -68,3 +68,6 @@ Thumbs.db
 *.log
 tmp/
 .tmp/
+
+# ---- Capturas da verificação no navegador ----
+/.playwright-mcp/

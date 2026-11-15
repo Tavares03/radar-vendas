@@ -140,6 +140,20 @@ def test_rotulos_de_mensagens_do_cliente(text: str, expected: list[str]):
 
 
 # ---------------------------------------------------------------- divulgações
+def test_setores_nao_herdam_divulgacao_de_varejo():
+    for sector in ("consorcio", "seguros", "imobiliaria", "clinica"):
+        ids = {d.id for d in load_playbook(sector).divulgacoes_obrigatorias}
+        assert "condicoes-de-compra" not in ids, sector
+    assert "condicoes-de-compra" in {
+        d.id for d in load_playbook("generico").divulgacoes_obrigatorias
+    }
+
+
+def test_desativar_tambem_vale_para_divulgacao_herdada():
+    playbook = parse_playbook("id: x\nnome: X\nherda: generico\ndesativar: [condicoes-de-compra]\n")
+    assert playbook.divulgacoes_obrigatorias == []
+
+
 def test_divulgacoes_obrigatorias():
     engine = RuleEngine(load_playbook("consorcio"))
     found = engine.disclosures(

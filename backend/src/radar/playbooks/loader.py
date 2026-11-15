@@ -68,7 +68,8 @@ def _merge(parent: Playbook, child: Playbook) -> Playbook:
     child_ids = {rule.id for rule in child.regras}
     disabled = set(child.desativar)
     rules = [r for r in parent.regras if r.id not in child_ids and r.id not in disabled]
-    disclosures = {d.id: d for d in parent.divulgacoes_obrigatorias}
+    # `desativar` vale para regras e para divulgações herdadas.
+    disclosures = {d.id: d for d in parent.divulgacoes_obrigatorias if d.id not in disabled}
     disclosures.update({d.id: d for d in child.divulgacoes_obrigatorias})
     objections = {o.tipo: o for o in parent.objecoes}
     objections.update({o.tipo: o for o in child.objecoes})

@@ -292,7 +292,7 @@ Cada fase lista entregas, interfaces que as fases seguintes consomem e como é v
 | 3 Privacidade | concluída | 358 testes (SQLite) e 357 (PostgreSQL); NER entra na fase 7 pelo `PiiDetector` |
 | 4 Dados sintéticos | concluída | gerador, splits por família, desafio, revisão e pacote HF; paráfrases e OOD por LLM prontos, aguardando chave no `.env` |
 | 5 Análise v1 | concluída | 644 testes (SQLite) e 643 (PostgreSQL); teste com LLM real pronto (`network`), aguardando chave no `.env` |
-| 6 Painel | pendente | |
+| 6 Painel | concluída | 655 testes (SQLite) e 654 (PostgreSQL) no backend, 23 no painel; verificado no navegador como admin, gestor e vendedor, no computador e no celular; `radar seed-demo` |
 | 7 Modelos próprios | pendente | |
 | 8 Space e evals | pendente | |
 | 9 Integrações | pendente | |

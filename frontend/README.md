@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Painel do Radar de Vendas
 
-## Getting Started
-
-First, run the development server:
+Next.js 16 (App Router, `cacheComponents`), React 19, Tailwind 4. Fala só com a API do Radar,
+pela própria origem: `/api/*` é repassado para `BACKEND_URL` (padrão `http://127.0.0.1:8000`),
+então não há CORS e o cookie de sessão é first-party.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000 (a API precisa estar em 127.0.0.1:8000)
+npm run lint
+npm run typecheck    # gera os tipos das rotas (next typegen) e roda o tsc
+npm test             # Vitest + Testing Library
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Como está organizado
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Pasta | O que tem |
+|---|---|
+| `src/app/login/` | entrada; a única página fora do painel |
+| `src/app/(painel)/` | as páginas do painel. Cada `page.tsx` é fino e só envolve a view (componente cliente) num `Suspense` |
+| `src/components/` | peças compartilhadas: bolha de mensagem, texto com destaques, painel da nota, revisão de alerta, gráfico semanal, casca do app |
+| `src/lib/api/` | cliente tipado (`openapi-fetch`) e hooks SWR; `openapi.json` e `schema.d.ts` são gerados |
+| `src/lib/highlight.ts` | divide o texto em trechos: tarja de dado pessoal, evidência de alerta e texto comum |
+| `src/lib/format.ts` | rótulos e datas em português |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Os dados são buscados no navegador, com SWR: as páginas são estáticas e a sessão nunca é lida no
+servidor do Next. Um 401 leva para `/login`. As permissões vêm de `GET /api/v1/auth/me` e o
+painel esconde o que o papel não pode fazer; quem decide de verdade é a API.
 
-## Learn More
+## Contrato com a API
 
-To learn more about Next.js, take a look at the following resources:
+Os tipos vêm do OpenAPI da API. Ao mudar um endpoint:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# na raiz do repositório
+uv run python scripts/export_openapi.py
+cd frontend && npm run api:types
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Um teste do backend falha se o `openapi.json` ficar desatualizado, e a CI falha se o
+`schema.d.ts` não corresponder ao `openapi.json`.
 
-## Deploy on Vercel
+## Identidade visual
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O painel é a mesa de um auditor. A evidência de um alerta aparece como marca-texto na cor da
+severidade (`mark.evidencia[data-severity]`), e dado pessoal mascarado aparece como tarja
+(`.tarja`). Fora isso, papel claro e tinta azul-escura: cor forte só onde há severidade. A fonte
+é a Atkinson Hyperlegible Next, desenhada para leitura atenta. Os tokens ficam em
+`src/app/globals.css`.

@@ -5,6 +5,8 @@ id: seguros
 nome: Seguros
 versao: 1
 herda: generico
+# Fidelidade, troca e frete são do varejo: não valem para este setor.
+desativar: [condicoes-de-compra]
 descricao: Corretoras e seguradoras (auto, vida, residencial).
 
 regras:

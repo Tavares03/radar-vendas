@@ -29,7 +29,7 @@ regras:
     excecoes:                 # se aparecer na mesma frase, a regra não dispara
       - "depende da agenda"
 
-desativar: [pressao-ultima-vaga]   # regras herdadas que não valem aqui
+desativar: [pressao-ultima-vaga]   # regras ou divulgações herdadas que não valem aqui
 
 divulgacoes_obrigatorias:          # viram o critério "transparência" da nota
   - id: prazo-montagem

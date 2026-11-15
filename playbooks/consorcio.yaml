@@ -5,6 +5,8 @@ id: consorcio
 nome: Consórcio
 versao: 1
 herda: generico
+# Fidelidade, troca e frete são do varejo: não valem para este setor.
+desativar: [condicoes-de-compra]
 descricao: >
   Administradoras e representantes de consórcio (imóvel, veículo, serviços). Foco em promessa de
   contemplação, omissão da taxa de administração e regras de desistência.

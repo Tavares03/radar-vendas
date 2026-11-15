@@ -22,6 +22,7 @@ from radar.api.routers import (
     conversations,
     health,
     imports,
+    insights,
     playbooks,
     privacy,
     sellers,
@@ -49,6 +50,7 @@ API do **Radar de Vendas**, um supervisor de vendas com IA para equipes que vend
 MAX_JSON_BODY_MB = 10
 
 TAGS = [
+    {"name": "visão geral", "description": "Indicadores da empresa e de cada vendedor."},
     {"name": "saúde", "description": "Liveness, readiness e métricas."},
     {"name": "autenticação", "description": "Login, sessão e senha."},
     {"name": "empresa", "description": "Dados e configurações da empresa."},
@@ -134,6 +136,7 @@ def create_app() -> FastAPI:
         imports,
         conversations,
         alerts,
+        insights,
         playbooks,
         privacy,
         api_tokens,

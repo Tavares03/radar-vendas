@@ -59,6 +59,10 @@ def test_importacao_gera_analise_e_alertas(
     assert promise["status"] == "aberto"
     assert promise["message_index"] == 1
     assert "garantida" in promise["evidence"].lower()
+    # A mensagem inteira (mascarada) acompanha o alerta, para mostrar o trecho em contexto.
+    assert promise["message_text"].startswith("Oi [NOME_PESSOA]! Contemplação garantida")
+    pending = types["pedido_pendente"]
+    assert pending["message_text"] == "Me manda uma simulação?"
     assert "Roberto" not in json.dumps(body)  # tudo mascarado
 
     listing = client.get("/api/v1/conversations", headers=admin.headers).json()["items"][0]
@@ -119,6 +123,28 @@ def test_revisao_de_alerta_sobrevive_a_reanalise(
         )
         == 1
     )
+
+
+def test_quem_revisa_ve_quem_pode_receber_alertas_sem_gerir_usuarios(
+    client: TestClient, make_account: AccountFactory
+):
+    admin = make_account(Role.ADMIN)
+    gestor = make_account(Role.GESTOR, tenant=admin.tenant)
+    vendedor = make_account(Role.VENDEDOR, tenant=admin.tenant)
+    other = make_account(Role.ADMIN)
+
+    assert client.get("/api/v1/users", headers=gestor.headers).status_code == 403
+    response = client.get("/api/v1/alerts/assignees", headers=gestor.headers)
+    assert response.status_code == 200, response.text
+    people = response.json()
+    assert {p["id"] for p in people} == {
+        str(admin.user.id),
+        str(gestor.user.id),
+        str(vendedor.user.id),
+    }
+    assert str(other.user.id) not in {p["id"] for p in people}
+    assert set(people[0]) == {"id", "name", "role"}  # nada de e-mail ou último acesso
+    assert client.get("/api/v1/alerts/assignees", headers=vendedor.headers).status_code == 403
 
 
 def test_filtros_e_visao_do_vendedor(client: TestClient, make_account: AccountFactory, make_seller):  # type: ignore[no-untyped-def]
