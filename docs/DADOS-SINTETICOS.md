@@ -13,6 +13,7 @@ uv run radar-synth sample --sector seguros --seller problematico --out conversa.
 uv run radar-synth review --dataset data/generated/<versão> --n 40   # amostra para revisão humana
 uv run radar-synth export-hf --dataset data/generated/<versão>       # pasta pronta para o HF Hub
 uv run radar-synth samples                  # regenera data/samples/synthetic (versionado)
+uv run radar-synth demo                     # regenera data/samples/demo (a equipe da demonstração)
 ```
 
 O `.zip` de `sample` entra no Radar como um export de verdade (`POST /api/v1/imports` ou pelo

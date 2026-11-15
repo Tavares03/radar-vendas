@@ -36,3 +36,11 @@ def prepare_runtime(settings: Settings) -> None:
     except Exception as exc:
         # Banco ainda sem migrations: a API sobe e /api/ready denuncia o problema.
         log.warning("bootstrap_ignorado", error=str(exc))
+        return
+    try:
+        from radar.services.demo import seed_demo_on_first_boot
+
+        seed_demo_on_first_boot(settings)
+    except Exception as exc:
+        # A demonstração é um extra: se falhar, a instalação sobe normalmente, sem ela.
+        log.warning("demonstracao_ignorada", error=str(exc))

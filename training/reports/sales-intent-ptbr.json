@@ -1,0 +1,1788 @@
+{
+  "modelo": {
+    "name": "sales-intent-ptbr",
+    "version": "1.0.0",
+    "task": "classifier",
+    "base_model": "neuralmind/bert-base-portuguese-cased",
+    "dataset_version": "1.0+cb5e0bedcd"
+  },
+  "treino": {
+    "config": {
+      "name": "sales-intent-ptbr",
+      "task": "classifier",
+      "version": "1.0.0",
+      "base_model": "neuralmind/bert-base-portuguese-cased",
+      "base_license": "MIT",
+      "seed": 20261114,
+      "max_length": 128,
+      "stride": 32,
+      "batch_size": 32,
+      "epochs": 6,
+      "learning_rate": 3e-05,
+      "warmup_ratio": 0.1,
+      "weight_decay": 0.01,
+      "patience": 2,
+      "min_precision": 0.7
+    },
+    "best_epoch": 3,
+    "best_score": 0.56074,
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.10461,
+        "score": 0.50238,
+        "micro_f1": 0.50209,
+        "seconds": 255.3
+      },
+      {
+        "epoch": 2,
+        "loss": 0.00335,
+        "score": 0.50616,
+        "micro_f1": 0.52855,
+        "seconds": 254.0
+      },
+      {
+        "epoch": 3,
+        "loss": 0.0012,
+        "score": 0.56074,
+        "micro_f1": 0.5393,
+        "seconds": 250.1
+      },
+      {
+        "epoch": 4,
+        "loss": 0.00055,
+        "score": 0.54268,
+        "micro_f1": 0.51239,
+        "seconds": 249.9
+      },
+      {
+        "epoch": 5,
+        "loss": 0.00032,
+        "score": 0.44407,
+        "micro_f1": 0.46655,
+        "seconds": 247.3
+      }
+    ],
+    "seconds": 1273.4,
+    "hardware": "NVIDIA GeForce RTX 3050",
+    "torch": "2.15.0+cu132",
+    "transformers": "5.23.0",
+    "quantizacao": {
+      "receita": "uint8",
+      "aprovado": true,
+      "tolerancia": 0.01,
+      "tentativas": [
+        {
+          "receita": "int8 por canal com faixa reduzida",
+          "metrica": 0.56769
+        },
+        {
+          "receita": "uint8",
+          "metrica": 0.57802
+        }
+      ],
+      "metrica_fp32": 0.5819,
+      "metrica_quantizado": 0.57802
+    }
+  },
+  "avaliacao": {
+    "splits": {
+      "test": {
+        "mensagens": 9194,
+        "modelo": {
+          "metricas": {
+            "micro": {
+              "precision": 0.8758,
+              "recall": 0.3789,
+              "f1": 0.529,
+              "support": 1805,
+              "tp": 684,
+              "fp": 97,
+              "fn": 1121
+            },
+            "macro_f1": 0.4381,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 0.8727,
+                "recall": 0.75,
+                "f1": 0.8067,
+                "support": 64,
+                "tp": 48,
+                "fp": 7,
+                "fn": 16
+              },
+              "informacao_enganosa": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 98,
+                "tp": 0,
+                "fp": 0,
+                "fn": 98
+              },
+              "pressao_abusiva": {
+                "precision": 0.8621,
+                "recall": 0.4032,
+                "f1": 0.5495,
+                "support": 62,
+                "tp": 25,
+                "fp": 4,
+                "fn": 37
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 31,
+                "tp": 0,
+                "fp": 0,
+                "fn": 31
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 33,
+                "tp": 0,
+                "fp": 0,
+                "fn": 33
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 42,
+                "tp": 42,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_preco": {
+                "precision": 0.9634,
+                "recall": 0.3292,
+                "f1": 0.4907,
+                "support": 240,
+                "tp": 79,
+                "fp": 3,
+                "fn": 161
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 83,
+                "tp": 0,
+                "fp": 0,
+                "fn": 83
+              },
+              "objecao_prazo": {
+                "precision": 0.7297,
+                "recall": 0.4463,
+                "f1": 0.5538,
+                "support": 121,
+                "tp": 54,
+                "fp": 20,
+                "fn": 67
+              },
+              "objecao_vou_pensar": {
+                "precision": 0.8857,
+                "recall": 0.8611,
+                "f1": 0.8732,
+                "support": 108,
+                "tp": 93,
+                "fp": 12,
+                "fn": 15
+              },
+              "objecao_concorrente": {
+                "precision": 1.0,
+                "recall": 0.5974,
+                "f1": 0.748,
+                "support": 77,
+                "tp": 46,
+                "fp": 0,
+                "fn": 31
+              },
+              "objecao_cancelamento": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 125,
+                "tp": 0,
+                "fp": 0,
+                "fn": 125
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 0.3846,
+                "f1": 0.5556,
+                "support": 221,
+                "tp": 85,
+                "fp": 0,
+                "fn": 136
+              },
+              "pedido_cliente": {
+                "precision": 0.8061,
+                "recall": 0.424,
+                "f1": 0.5557,
+                "support": 500,
+                "tp": 212,
+                "fp": 51,
+                "fn": 288
+              }
+            }
+          },
+          "confusao": {
+            "promessa_indevida": {
+              "promessa_indevida": 48,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 16
+            },
+            "informacao_enganosa": {
+              "promessa_indevida": 6,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 4,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 88
+            },
+            "pressao_abusiva": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 25,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 37
+            },
+            "pagamento_fora_canal": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 31
+            },
+            "linguagem_inadequada": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 33
+            },
+            "dados_pessoais_indevidos": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 42,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "objecao_preco": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 79,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 161
+            },
+            "objecao_confianca": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 83
+            },
+            "objecao_prazo": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 54,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 67
+            },
+            "objecao_vou_pensar": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 93,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 15
+            },
+            "objecao_concorrente": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 3,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 46,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 28
+            },
+            "objecao_cancelamento": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 1,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 124
+            },
+            "sinal_compra": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 85,
+              "pedido_cliente": 39,
+              "nenhum": 97
+            },
+            "pedido_cliente": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 212,
+              "nenhum": 288
+            },
+            "nenhum": {
+              "promessa_indevida": 1,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 19,
+              "objecao_vou_pensar": 12,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 12,
+              "nenhum": 0
+            }
+          }
+        },
+        "regras": {
+          "metricas": {
+            "micro": {
+              "precision": 1.0,
+              "recall": 0.9091,
+              "f1": 0.9524,
+              "support": 1805,
+              "tp": 1641,
+              "fp": 0,
+              "fn": 164
+            },
+            "macro_f1": 0.9437,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 1.0,
+                "recall": 0.7812,
+                "f1": 0.8772,
+                "support": 64,
+                "tp": 50,
+                "fp": 0,
+                "fn": 14
+              },
+              "informacao_enganosa": {
+                "precision": 1.0,
+                "recall": 0.8776,
+                "f1": 0.9348,
+                "support": 98,
+                "tp": 86,
+                "fp": 0,
+                "fn": 12
+              },
+              "pressao_abusiva": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 62,
+                "tp": 62,
+                "fp": 0,
+                "fn": 0
+              },
+              "pagamento_fora_canal": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 31,
+                "tp": 31,
+                "fp": 0,
+                "fn": 0
+              },
+              "linguagem_inadequada": {
+                "precision": 1.0,
+                "recall": 0.9394,
+                "f1": 0.9688,
+                "support": 33,
+                "tp": 31,
+                "fp": 0,
+                "fn": 2
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 0.9762,
+                "f1": 0.988,
+                "support": 42,
+                "tp": 41,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_preco": {
+                "precision": 1.0,
+                "recall": 0.8917,
+                "f1": 0.9427,
+                "support": 240,
+                "tp": 214,
+                "fp": 0,
+                "fn": 26
+              },
+              "objecao_confianca": {
+                "precision": 1.0,
+                "recall": 0.6265,
+                "f1": 0.7704,
+                "support": 83,
+                "tp": 52,
+                "fp": 0,
+                "fn": 31
+              },
+              "objecao_prazo": {
+                "precision": 1.0,
+                "recall": 0.9256,
+                "f1": 0.9614,
+                "support": 121,
+                "tp": 112,
+                "fp": 0,
+                "fn": 9
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 0.963,
+                "f1": 0.9811,
+                "support": 108,
+                "tp": 104,
+                "fp": 0,
+                "fn": 4
+              },
+              "objecao_concorrente": {
+                "precision": 1.0,
+                "recall": 0.7792,
+                "f1": 0.8759,
+                "support": 77,
+                "tp": 60,
+                "fp": 0,
+                "fn": 17
+              },
+              "objecao_cancelamento": {
+                "precision": 1.0,
+                "recall": 0.992,
+                "f1": 0.996,
+                "support": 125,
+                "tp": 124,
+                "fp": 0,
+                "fn": 1
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 0.8824,
+                "f1": 0.9375,
+                "support": 221,
+                "tp": 195,
+                "fp": 0,
+                "fn": 26
+              },
+              "pedido_cliente": {
+                "precision": 1.0,
+                "recall": 0.958,
+                "f1": 0.9785,
+                "support": 500,
+                "tp": 479,
+                "fp": 0,
+                "fn": 21
+              }
+            }
+          }
+        },
+        "regras_e_modelo": {
+          "metricas": {
+            "micro": {
+              "precision": 0.9461,
+              "recall": 0.944,
+              "f1": 0.9451,
+              "support": 1805,
+              "tp": 1704,
+              "fp": 97,
+              "fn": 101
+            },
+            "macro_f1": 0.9421,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 0.9,
+                "recall": 0.9844,
+                "f1": 0.9403,
+                "support": 64,
+                "tp": 63,
+                "fp": 7,
+                "fn": 1
+              },
+              "informacao_enganosa": {
+                "precision": 1.0,
+                "recall": 0.8776,
+                "f1": 0.9348,
+                "support": 98,
+                "tp": 86,
+                "fp": 0,
+                "fn": 12
+              },
+              "pressao_abusiva": {
+                "precision": 0.9394,
+                "recall": 1.0,
+                "f1": 0.9688,
+                "support": 62,
+                "tp": 62,
+                "fp": 4,
+                "fn": 0
+              },
+              "pagamento_fora_canal": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 31,
+                "tp": 31,
+                "fp": 0,
+                "fn": 0
+              },
+              "linguagem_inadequada": {
+                "precision": 1.0,
+                "recall": 0.9394,
+                "f1": 0.9688,
+                "support": 33,
+                "tp": 31,
+                "fp": 0,
+                "fn": 2
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 42,
+                "tp": 42,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_preco": {
+                "precision": 0.9871,
+                "recall": 0.9583,
+                "f1": 0.9725,
+                "support": 240,
+                "tp": 230,
+                "fp": 3,
+                "fn": 10
+              },
+              "objecao_confianca": {
+                "precision": 1.0,
+                "recall": 0.6265,
+                "f1": 0.7704,
+                "support": 83,
+                "tp": 52,
+                "fp": 0,
+                "fn": 31
+              },
+              "objecao_prazo": {
+                "precision": 0.8485,
+                "recall": 0.9256,
+                "f1": 0.8854,
+                "support": 121,
+                "tp": 112,
+                "fp": 20,
+                "fn": 9
+              },
+              "objecao_vou_pensar": {
+                "precision": 0.8974,
+                "recall": 0.9722,
+                "f1": 0.9333,
+                "support": 108,
+                "tp": 105,
+                "fp": 12,
+                "fn": 3
+              },
+              "objecao_concorrente": {
+                "precision": 1.0,
+                "recall": 0.7922,
+                "f1": 0.8841,
+                "support": 77,
+                "tp": 61,
+                "fp": 0,
+                "fn": 16
+              },
+              "objecao_cancelamento": {
+                "precision": 1.0,
+                "recall": 0.992,
+                "f1": 0.996,
+                "support": 125,
+                "tp": 124,
+                "fp": 0,
+                "fn": 1
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 221,
+                "tp": 221,
+                "fp": 0,
+                "fn": 0
+              },
+              "pedido_cliente": {
+                "precision": 0.9047,
+                "recall": 0.968,
+                "f1": 0.9353,
+                "support": 500,
+                "tp": 484,
+                "fp": 51,
+                "fn": 16
+              }
+            }
+          }
+        },
+        "tfidf": {
+          "metricas": {
+            "micro": {
+              "precision": 0.711,
+              "recall": 0.2427,
+              "f1": 0.3618,
+              "support": 1805,
+              "tp": 438,
+              "fp": 178,
+              "fn": 1367
+            },
+            "macro_f1": 0.2253,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 0.4746,
+                "recall": 0.4375,
+                "f1": 0.4553,
+                "support": 64,
+                "tp": 28,
+                "fp": 31,
+                "fn": 36
+              },
+              "informacao_enganosa": {
+                "precision": 1.0,
+                "recall": 0.2245,
+                "f1": 0.3667,
+                "support": 98,
+                "tp": 22,
+                "fp": 0,
+                "fn": 76
+              },
+              "pressao_abusiva": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 62,
+                "tp": 0,
+                "fp": 0,
+                "fn": 62
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 31,
+                "tp": 0,
+                "fp": 0,
+                "fn": 31
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 33,
+                "tp": 0,
+                "fp": 0,
+                "fn": 33
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 0.5714,
+                "f1": 0.7273,
+                "support": 42,
+                "tp": 24,
+                "fp": 0,
+                "fn": 18
+              },
+              "objecao_preco": {
+                "precision": 0.8072,
+                "recall": 0.2792,
+                "f1": 0.4149,
+                "support": 240,
+                "tp": 67,
+                "fp": 16,
+                "fn": 173
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 83,
+                "tp": 0,
+                "fp": 0,
+                "fn": 83
+              },
+              "objecao_prazo": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 121,
+                "tp": 0,
+                "fp": 0,
+                "fn": 121
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 0.0093,
+                "f1": 0.0183,
+                "support": 108,
+                "tp": 1,
+                "fp": 0,
+                "fn": 107
+              },
+              "objecao_concorrente": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 77,
+                "tp": 0,
+                "fp": 0,
+                "fn": 77
+              },
+              "objecao_cancelamento": {
+                "precision": 0.6136,
+                "recall": 0.648,
+                "f1": 0.6304,
+                "support": 125,
+                "tp": 81,
+                "fp": 51,
+                "fn": 44
+              },
+              "sinal_compra": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 221,
+                "tp": 0,
+                "fp": 0,
+                "fn": 221
+              },
+              "pedido_cliente": {
+                "precision": 0.7288,
+                "recall": 0.43,
+                "f1": 0.5409,
+                "support": 500,
+                "tp": 215,
+                "fp": 80,
+                "fn": 285
+              }
+            }
+          }
+        }
+      },
+      "desafio": {
+        "mensagens": 43,
+        "modelo": {
+          "metricas": {
+            "micro": {
+              "precision": 0.8571,
+              "recall": 0.5,
+              "f1": 0.6316,
+              "support": 12,
+              "tp": 6,
+              "fp": 1,
+              "fn": 6
+            },
+            "macro_f1": 0.5152,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "informacao_enganosa": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "pressao_abusiva": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_preco": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_prazo": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 1,
+                "fn": 0
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_concorrente": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_cancelamento": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 0.5,
+                "f1": 0.6667,
+                "support": 2,
+                "tp": 1,
+                "fp": 0,
+                "fn": 1
+              },
+              "pedido_cliente": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              }
+            }
+          },
+          "confusao": {
+            "promessa_indevida": {
+              "promessa_indevida": 1,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "informacao_enganosa": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "pressao_abusiva": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 1,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "pagamento_fora_canal": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "linguagem_inadequada": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "dados_pessoais_indevidos": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "objecao_preco": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 1,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "objecao_confianca": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "objecao_prazo": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "objecao_vou_pensar": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 1,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "objecao_concorrente": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "objecao_cancelamento": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            },
+            "sinal_compra": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 1,
+              "pedido_cliente": 0,
+              "nenhum": 1
+            },
+            "pedido_cliente": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 0,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 1,
+              "nenhum": 0
+            },
+            "nenhum": {
+              "promessa_indevida": 0,
+              "informacao_enganosa": 0,
+              "pressao_abusiva": 0,
+              "pagamento_fora_canal": 0,
+              "linguagem_inadequada": 0,
+              "dados_pessoais_indevidos": 0,
+              "objecao_preco": 0,
+              "objecao_confianca": 0,
+              "objecao_prazo": 1,
+              "objecao_vou_pensar": 0,
+              "objecao_concorrente": 0,
+              "objecao_cancelamento": 0,
+              "sinal_compra": 0,
+              "pedido_cliente": 0,
+              "nenhum": 0
+            }
+          }
+        },
+        "regras": {
+          "metricas": {
+            "micro": {
+              "precision": 1.0,
+              "recall": 0.6667,
+              "f1": 0.8,
+              "support": 12,
+              "tp": 8,
+              "fp": 0,
+              "fn": 4
+            },
+            "macro_f1": 0.6364,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "informacao_enganosa": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "pressao_abusiva": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_preco": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_prazo": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_concorrente": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_cancelamento": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2,
+                "tp": 2,
+                "fp": 0,
+                "fn": 0
+              },
+              "pedido_cliente": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              }
+            }
+          }
+        },
+        "regras_e_modelo": {
+          "metricas": {
+            "micro": {
+              "precision": 0.9,
+              "recall": 0.75,
+              "f1": 0.8182,
+              "support": 12,
+              "tp": 9,
+              "fp": 1,
+              "fn": 3
+            },
+            "macro_f1": 0.7273,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "informacao_enganosa": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "pressao_abusiva": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_preco": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_prazo": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 1,
+                "fn": 0
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_concorrente": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_cancelamento": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "sinal_compra": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 2,
+                "tp": 2,
+                "fp": 0,
+                "fn": 0
+              },
+              "pedido_cliente": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              }
+            }
+          }
+        },
+        "tfidf": {
+          "metricas": {
+            "micro": {
+              "precision": 0.5,
+              "recall": 0.1667,
+              "f1": 0.25,
+              "support": 12,
+              "tp": 2,
+              "fp": 2,
+              "fn": 10
+            },
+            "macro_f1": 0.1515,
+            "per_class": {
+              "promessa_indevida": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "informacao_enganosa": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "pressao_abusiva": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "pagamento_fora_canal": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "linguagem_inadequada": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "dados_pessoais_indevidos": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_preco": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_confianca": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_prazo": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 1,
+                "fn": 0
+              },
+              "objecao_vou_pensar": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0,
+                "support": 1,
+                "tp": 1,
+                "fp": 0,
+                "fn": 0
+              },
+              "objecao_concorrente": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 1,
+                "tp": 0,
+                "fp": 0,
+                "fn": 1
+              },
+              "objecao_cancelamento": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0
+              },
+              "sinal_compra": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "support": 2,
+                "tp": 0,
+                "fp": 0,
+                "fn": 2
+              },
+              "pedido_cliente": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1": 0.6667,
+                "support": 1,
+                "tp": 1,
+                "fp": 1,
+                "fn": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "limiares": {
+      "promessa_indevida": 0.95,
+      "informacao_enganosa": 1.01,
+      "pressao_abusiva": 0.25,
+      "pagamento_fora_canal": 1.01,
+      "linguagem_inadequada": 1.01,
+      "dados_pessoais_indevidos": 0.5,
+      "objecao_preco": 0.95,
+      "objecao_confianca": 1.01,
+      "objecao_prazo": 0.95,
+      "objecao_vou_pensar": 0.85,
+      "objecao_concorrente": 0.95,
+      "objecao_cancelamento": 1.01,
+      "sinal_compra": 0.1,
+      "pedido_cliente": 0.95
+    },
+    "paridade": {
+      "mensagens": 2000,
+      "onnx_fp32_x_int8_decisoes": 0.9675,
+      "onnx_fp32_x_int8_dif_max_prob": 0.8951,
+      "pytorch_x_onnx_fp32_dif_max_prob": 1e-05,
+      "pytorch_x_onnx_int8_decisoes": 0.9675
+    },
+    "latencia": {
+      "int8": {
+        "p50_ms": 7.93,
+        "p95_ms": 13.27,
+        "messages_per_second": 78.4
+      },
+      "fp32": {
+        "p50_ms": 14.81,
+        "p95_ms": 22.06,
+        "messages_per_second": 50.9
+      }
+    },
+    "tamanho_mb": {
+      "int8": 110.7,
+      "fp32": 437.3
+    }
+  },
+  "gerado_em": "2026-11-15T13:57:23+00:00"
+}

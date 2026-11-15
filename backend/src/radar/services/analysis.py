@@ -75,8 +75,10 @@ def get_analyzer(mode: str, settings: Settings) -> RouterAnalyzer | None:
 
 
 def get_classifier() -> MessageClassifier | None:
-    """Classificador próprio (ONNX). Entra na fase de modelos próprios; até lá, nenhum."""
-    return None
+    """Classificador próprio (ONNX), se houver; sem ele a análise segue com regras e LLM."""
+    from radar.ml.loader import load_classifier
+
+    return load_classifier()
 
 
 # ---------------------------------------------------------------- playbook

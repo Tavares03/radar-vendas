@@ -100,6 +100,18 @@ def samples(
 
 
 @app.command()
+def demo(
+    out: Annotated[Path, typer.Option(help="Pasta de saída")] = Path("data/samples/demo"),
+    seed: Annotated[int, typer.Option(help="Semente")] = 7,
+) -> None:
+    """Gera os exports da demonstração: uma equipe de consórcio ao longo de oito semanas."""
+    from radar_synth.demo import write_demo
+
+    count = write_demo(out, seed)
+    typer.echo(f"{count} conversas da demonstração em {out}")
+
+
+@app.command()
 def review(
     dataset: Annotated[Path, typer.Option(help="Pasta do dataset gerado")],
     n: Annotated[int, typer.Option(help="Conversas na amostra")] = 40,

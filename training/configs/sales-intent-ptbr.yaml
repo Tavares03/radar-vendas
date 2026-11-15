@@ -1,0 +1,17 @@
+# Classificador multirrótulo de mensagens de venda. Base escolhida em training/reports/encoders.md.
+name: sales-intent-ptbr
+task: classifier
+version: 1.0.0
+base_model: neuralmind/bert-base-portuguese-cased
+base_license: MIT
+seed: 20261114
+max_length: 128
+batch_size: 32
+epochs: 6           # 1 época na comparação deu F1 macro 0,57; parada antecipada decide o resto
+learning_rate: 3.0e-5
+warmup_ratio: 0.1
+weight_decay: 0.01
+patience: 2
+# Rótulo só vale em produção se acertar pelo menos 70% do que aponta na validação; o que não
+# chega lá fica desligado. Sem o piso, a precisão dos riscos no teste era 57%; com ele, 91%.
+min_precision: 0.7

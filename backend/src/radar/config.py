@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     ner_hub_id: str = ""
     classifier_hub_id: str = ""
     embedding_hub_id: str = "intfloat/multilingual-e5-small"
+    #: Threads do ONNX Runtime por modelo (0 = o padrão dele, um por núcleo físico).
+    ml_threads: int = Field(default=0, ge=0, le=64)
 
     # ------------------------------------------------------------ LLM
     # cloud: usa a cadeia inteira; local: só provedores locais (nada sai da máquina); off: sem LLM.
@@ -142,7 +144,10 @@ class Settings(BaseSettings):
     bootstrap_tenant_name: str = ""
     bootstrap_admin_email: str = ""
     bootstrap_admin_password: SecretStr | None = None
+    #: Carrega a empresa de demonstração na primeira subida, se o banco não tiver usuários
+    #: (nunca em produção). Sem ``demo_password``, a senha é sorteada e sai no log da API.
     seed_demo: bool = False
+    demo_password: SecretStr | None = None
 
     # ------------------------------------------------------------ padrões de retenção (dias)
     default_retention_raw_days: int = 90

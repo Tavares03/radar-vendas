@@ -16,6 +16,13 @@ radar-vendas = { workspace = true }
 radar-synthetic = { workspace = true }
 radar-evals = { workspace = true }
 radar-training = { workspace = true }
+# PyTorch com CUDA no Windows e no Linux (o driver precisa suportar CUDA 13.2+); no macOS, o do PyPI.
+torch = [{ index = "pytorch-cu132", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
 
 [dependency-groups]
 dev = [
@@ -25,9 +32,11 @@ dev = [
     "mypy>=1.13",
     "types-pyyaml>=6.0",
     "types-reportlab>=4.2",
+    # Para montar modelos ONNX minúsculos nos testes do runtime (sem PyTorch).
+    "onnx>=1.23",
 ]
-# Treino dos modelos (PyTorch, Transformers…). Pesado: `uv sync --group train`.
-train = ["radar-training"]
+# Treino dos modelos (PyTorch, Transformers…). Pesado: `uv sync --all-packages --group train`.
+train = ["radar-training[train]"]
 
 # ---------------------------------------------------------------- ruff
 [tool.ruff]
@@ -74,10 +83,10 @@ python_version = "3.12"
 strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
-mypy_path = ["backend/src", "synthetic/src", "evals/src"]
+mypy_path = ["backend/src", "synthetic/src", "evals/src", "training/src"]
 explicit_package_bases = true
 namespace_packages = true
-exclude = ["backend/migrations/", "frontend/", "training/", "space/", "scripts/"]
+exclude = ["backend/migrations/", "frontend/", "space/", "scripts/"]
 
 [[tool.mypy.overrides]]
 module = [
@@ -85,6 +94,13 @@ module = [
     "huggingface_hub.*", "tokenizers.*", "av.*",
 ]
 ignore_missing_imports = true
+
+# Dependências do treino (extra `train`): a CI não as instala, então o mypy as trata como Any em
+# qualquer máquina, para o resultado ser o mesmo com e sem PyTorch.
+[[tool.mypy.overrides]]
+module = ["torch.*", "transformers.*", "sklearn.*", "onnx.*", "onnxscript.*", "safetensors.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
@@ -94,7 +110,7 @@ disallow_untyped_defs = false
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra --strict-markers --import-mode=importlib"
-testpaths = ["backend/tests", "synthetic/tests", "evals/tests"]
+testpaths = ["backend/tests", "synthetic/tests", "evals/tests", "training/tests"]
 markers = [
     "postgres: exige PostgreSQL com pgvector (RADAR_TEST_DATABASE_URL)",
     "slow: testes lentos (modelos reais, áudio)",
@@ -103,7 +119,7 @@ markers = [
 filterwarnings = ["error::DeprecationWarning:radar.*"]
 
 [tool.coverage.run]
-source = ["radar", "radar_synth", "radar_evals"]
+source = ["radar", "radar_synth", "radar_evals", "radar_training"]
 branch = true
 omit = ["*/migrations/*", "*/tests/*"]
 

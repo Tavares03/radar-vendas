@@ -16,8 +16,16 @@ primeiro lugar.
 > by design, and it runs at zero cost: local models plus free-tier LLM APIs, or 100% offline with
 > Ollama. See [docs/PLANO.md](docs/PLANO.md) for the roadmap.
 
-> **Estado:** em construção, fase por fase. O que já funciona está em
-> [Status das fases](docs/PLANO.md#8-status-das-fases).
+![Visão geral do painel: o resumo do período numa frase, os alertas críticos com o trecho marcado, a nota média por semana e a equipe](docs/img/visao-geral.png)
+
+| Conversa com a evidência marcada | Evolução de cada vendedor |
+|---|---|
+| ![Conversa no estilo do WhatsApp com o trecho do alerta marcado, dados pessoais em tarja e a nota explicada ao lado](docs/img/conversa.png) | ![Página de um vendedor: evolução semanal, critérios da nota, objeções e alertas em aberto](docs/img/vendedor.png) |
+
+As telas acima são da empresa de demonstração, com conversas 100% sintéticas.
+
+> **Estado:** em construção, fase por fase. Importação, privacidade, análise, painel e modelos
+> próprios já funcionam; o que falta está em [O que já funciona e o que vem](#o-que-já-funciona-e-o-que-vem).
 
 ## Por que existe
 
@@ -35,7 +43,7 @@ para WhatsApp. O Radar de Vendas é a versão aberta, brasileira e gratuita.
 ## Como funciona
 
 ```
-Export do WhatsApp / API / webhook
+Export do WhatsApp (.zip ou .txt) / API
         │
         ▼
 Transcrição local de áudios  →  Mascaramento de dados pessoais (regex + modelo próprio)
@@ -50,7 +58,7 @@ Análise em três camadas auditáveis
 Alertas com evidência · nota 0–100 explicável · resumo · sugestão de próxima mensagem
         │
         ▼
-Painel web · e-mail / Telegram / webhook · relatórios
+Painel web      (em breve: avisos por e-mail, Telegram e webhook, e relatórios)
 ```
 
 Nenhum texto sai da sua máquina sem máscara. No modo local (Ollama), nada sai da máquina.
@@ -79,15 +87,26 @@ docker compose exec api radar create-user minha-empresa voce@empresa.com.br --na
 
 ### Experimentar com dados de demonstração
 
+Na primeira subida, com o banco vazio, o Radar carrega sozinho uma empresa de demonstração: a
+"Plano Certo Consórcios", uma equipe fictícia de cinco vendedores com 45 conversas das últimas
+oito semanas, analisadas em segundo plano. Os logins são `admin@demo.radar`, `gestor@demo.radar`
+e `vendedor@demo.radar` (entre com cada um para ver o que cada papel enxerga). A senha é sorteada
+e aparece uma vez no log da API:
+
+```bash
+docker compose logs api | grep demonstracao_criada
+```
+
+Para escolher a senha, defina `RADAR_DEMO_PASSWORD` (10 caracteres ou mais) no `.env` antes de
+subir. Para não carregar a demonstração, `RADAR_SEED_DEMO=false`. Ela nunca é criada com
+`RADAR_ENVIRONMENT=prod`, nem quando você configura o seu próprio administrador. Numa instalação
+que já tem usuários, dá para carregá-la à mão:
+
 ```bash
 docker compose exec api radar seed-demo
 ```
 
-O comando pede uma senha (10 caracteres ou mais) e cria a empresa "Demonstração" com dez
-conversas sintéticas já analisadas (consórcio, seguros, imobiliária, clínica e genérico) e três
-usuários: `admin@demo.radar`, `gestor@demo.radar` e `vendedor@demo.radar`. Entre no painel com
-cada um para ver o que cada papel enxerga. Todas as pessoas e empresas das conversas são
-inventadas; o comando se recusa a rodar com `RADAR_ENVIRONMENT=prod`.
+Todas as pessoas e empresas das conversas são inventadas, e as datas acompanham o dia da carga.
 
 ### O painel
 
@@ -143,6 +162,23 @@ análise mais fina, crie chaves gratuitas (não pedem cartão) e coloque no `.en
 
 Para rodar **100% local**: `docker compose --profile local up` e `RADAR_LLM_MODE=local`.
 
+## Modelos próprios
+
+Dois modelos ajustados sobre o [BERTimbau](https://huggingface.co/neuralmind/bert-base-portuguese-cased),
+treinados **só com dados sintéticos** e servidos em ONNX int8 na CPU (cerca de 8 ms por mensagem,
+110 MB cada, sem PyTorch em produção):
+
+| Modelo | O que faz | Resultado que importa (conjunto de teste) |
+|---|---|---|
+| `pii-ner-ptbr` | acha CPF, CNPJ, RG, telefone, e-mail, endereço, CEP, PIX, conta, placa e nomes | com o modelo, **100%** das entidades do teste ficam inteiras debaixo de máscara; só com regex, 92,6%. No conjunto de casos difíceis, 100% contra 60% |
+| `sales-intent-ptbr` | marca riscos do vendedor, objeções, sinal de compra e pedidos do cliente | soma-se às regras dos playbooks: no conjunto de casos difíceis, a revocação sobe de 67% para 75% com precisão de 90%. Só aponta os rótulos em que acerta pelo menos 70% na validação |
+
+O teste é sintético como o treino (com famílias de template que o treino nunca viu), então mede
+generalização entre templates, não o mundo real; os relatórios completos, com matriz de
+confusão, baselines e limitações, estão em [`training/reports/`](training/reports) e o passo a
+passo em [docs/TREINAMENTO.md](docs/TREINAMENTO.md). Os modelos ainda não foram publicados no
+Hugging Face: `scripts/publish_hf.py` publica com um comando quando houver um token.
+
 ## Desenvolvimento
 
 Requisitos: Python 3.12, [uv](https://docs.astral.sh/uv/), Node 24.
@@ -151,7 +187,7 @@ Requisitos: Python 3.12, [uv](https://docs.astral.sh/uv/), Node 24.
 uv sync --all-packages            # instala backend, synthetic, evals e ferramentas de dev
 uv run pytest                     # testes (SQLite em memória, sem serviços)
 uv run ruff check . && uv run ruff format --check .
-uv run mypy backend/src synthetic/src evals/src
+uv run mypy backend/src synthetic/src evals/src training/src
 
 # API em modo leve (SQLite, fila na própria API)
 uv run radar init-db
@@ -189,6 +225,23 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 | [`playbooks/`](playbooks) | regras por setor, em YAML |
 | [`docs/`](docs) | plano, decisões, LGPD, guias |
 
+## O que já funciona e o que vem
+
+| | Estado |
+|---|---|
+| Importar exports do WhatsApp (Android e iPhone, PT-BR e EN), em lote e pela API | pronto |
+| Transcrição local de áudios (faster-whisper) | pronto |
+| Máscara de dados pessoais (regex, validadores e modelo próprio), texto original cifrado, retenção, auditoria e direitos do titular | pronto |
+| Análise em camadas: regras do playbook, classificador próprio, métricas de tempo e LLM gratuito com failover | pronto |
+| Playbooks de consórcio, seguros, imobiliária, clínica e genérico, editáveis e testáveis pelo painel | pronto |
+| Painel: visão geral, fila de alertas, conversa com evidências, vendedores, playbooks, configurações | pronto |
+| Modelos próprios treinados e avaliados (`pii-ner-ptbr`, `sales-intent-ptbr`), servidos em ONNX na CPU | pronto, ainda não publicados no Hugging Face |
+| Demo pública no Hugging Face Spaces e avaliação do sistema inteiro na CI | a fazer |
+| Alertas por e-mail, Telegram e webhook; webhooks de saída; exemplo para N8N; espelho do WhatsApp Cloud API e da Evolution API | a fazer |
+| Coach do vendedor, biblioteca de boas respostas, insights da equipe, busca em linguagem natural e relatórios em PDF | a fazer |
+
+O plano completo, fase por fase, está em [docs/PLANO.md](docs/PLANO.md).
+
 ## Documentação
 
 - [Plano e status](docs/PLANO.md)
@@ -196,6 +249,7 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 - [LGPD e privacidade](docs/LGPD.md)
 - [Dados sintéticos](docs/DADOS-SINTETICOS.md)
 - [Como escrever um playbook](docs/PLAYBOOKS.md)
+- [Modelos próprios: treino, avaliação e publicação](docs/TREINAMENTO.md)
 - [Como contribuir](CONTRIBUTING.md)
 - [Política de segurança](SECURITY.md)
 

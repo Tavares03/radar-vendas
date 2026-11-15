@@ -1,0 +1,15 @@
+# NER de dados pessoais em PT-BR. Base escolhida em training/reports/encoders.md.
+name: pii-ner-ptbr
+task: ner
+version: 1.0.0
+base_model: neuralmind/bert-base-portuguese-cased
+base_license: MIT
+seed: 20261114
+max_length: 128     # 99,9% das mensagens do dataset têm até 40 tokens; texto longo vira janelas
+stride: 32
+batch_size: 32
+epochs: 5
+learning_rate: 5.0e-5
+warmup_ratio: 0.1
+weight_decay: 0.01
+patience: 2

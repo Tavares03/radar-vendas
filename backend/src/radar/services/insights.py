@@ -92,6 +92,24 @@ def overview(db: Session, *, days: int) -> dict[str, Any]:
     critical = _critical_by_conversation(db, ids)
     scores = [c.score for c in conversations if c.score is not None]
 
+    # A tendência cobre sempre as mesmas semanas, qualquer que seja o período escolhido: com
+    # "30 dias" o gráfico ficava com as primeiras semanas vazias, como se não tivesse havido conversa.
+    trend_start = datetime.combine(
+        _week_start(reference) - timedelta(weeks=WEEKS - 1), datetime.min.time(), tzinfo=UTC
+    )
+    if trend_start < since:
+        trend = list(
+            db.scalars(
+                select(Conversation).where(
+                    Conversation.analyzed_at.is_not(None),
+                    Conversation.last_message_at >= trend_start,
+                )
+            )
+        )
+        trend_critical = _critical_by_conversation(db, [c.id for c in trend])
+    else:
+        trend, trend_critical = conversations, critical
+
     # "Em aberto" é sobre agora: conta os alertas de todas as conversas, não só as do período.
     open_alerts = {"critico": 0, "atencao": 0, "info": 0}
     types: Counter[str] = Counter()
@@ -131,7 +149,7 @@ def overview(db: Session, *, days: int) -> dict[str, Any]:
         "conversations_analyzed": len(conversations),
         "average_score": round(sum(scores) / len(scores), 1) if scores else None,
         "open_alerts": open_alerts,
-        "weekly": _weekly(conversations, reference, critical),
+        "weekly": _weekly(trend, reference, trend_critical),
         "sellers": sellers,
         "alert_types": [
             {"type": t, "label": label_pt(t), "count": n} for t, n in types.most_common(8)

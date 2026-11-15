@@ -574,9 +574,10 @@ def import_export(db: Session, record: Import, tenant: Tenant, settings: Setting
 
     if missing_audio:
         note = (
-            f"{missing_audio} áudio(s) vieram sem o arquivo e não foram transcritos. "
-            'Para incluí-los, exporte a conversa com a opção "Incluir mídia".'
-        )
+            "1 áudio veio sem o arquivo e não foi transcrito. "
+            if missing_audio == 1
+            else f"{missing_audio} áudios vieram sem o arquivo e não foram transcritos. "
+        ) + 'Para incluí-los, exporte a conversa com a opção "Incluir mídia".'
         result.conversation.warnings = list(
             dict.fromkeys([*(result.conversation.warnings or []), note])
         )

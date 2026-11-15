@@ -104,10 +104,12 @@ def set_ner_model(model: NerModel | None, *, clear: bool = False) -> None:
 def _load_ner() -> NerModel | None:
     if _has_override:
         return _ner_override
-    if get_settings().ner_model == "off":
+    settings = get_settings()
+    if settings.ner_model == "off":
         return None
-    # O modelo próprio entra na fase 7 (radar.ml); até lá a camada fica de fora.
-    return None
+    from radar.ml.loader import load_ner
+
+    return load_ner(settings)
 
 
 def get_pii_detector() -> PiiDetector:

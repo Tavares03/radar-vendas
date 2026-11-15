@@ -1,0 +1,78 @@
+{
+  "dataset_version": "1.0+cb5e0bedcd",
+  "epochs": 1,
+  "results": [
+    {
+      "base_model": "neuralmind/bert-base-portuguese-cased",
+      "ner": {
+        "validation_score": 0.9706,
+        "metric": "micro_f1_exato",
+        "train_seconds": 252.2
+      },
+      "parameters_millions": 108.4,
+      "cpu_latency": {
+        "p50_ms": 44.33,
+        "p95_ms": 54.21,
+        "messages_per_second": 45.9
+      },
+      "classifier": {
+        "validation_score": 0.5697,
+        "metric": "macro_f1",
+        "train_seconds": 258.4
+      },
+      "cpu_latency_classifier": {
+        "p50_ms": 41.88,
+        "p95_ms": 49.6,
+        "messages_per_second": 45.9
+      }
+    },
+    {
+      "base_model": "pablocosta/bertabaporu-base-uncased",
+      "ner": {
+        "validation_score": 0.8567,
+        "metric": "micro_f1_exato",
+        "train_seconds": 268.2
+      },
+      "parameters_millions": 134.6,
+      "cpu_latency": {
+        "p50_ms": 42.27,
+        "p95_ms": 63.62,
+        "messages_per_second": 54.5
+      },
+      "classifier": {
+        "validation_score": 0.5082,
+        "metric": "macro_f1",
+        "train_seconds": 267.6
+      },
+      "cpu_latency_classifier": {
+        "p50_ms": 44.64,
+        "p95_ms": 52.14,
+        "messages_per_second": 56.9
+      }
+    },
+    {
+      "base_model": "jhu-clsp/mmBERT-small",
+      "ner": {
+        "validation_score": 0.8937,
+        "metric": "micro_f1_exato",
+        "train_seconds": 345.8
+      },
+      "parameters_millions": 140.7,
+      "cpu_latency": {
+        "p50_ms": 26.25,
+        "p95_ms": 31.07,
+        "messages_per_second": 65.1
+      },
+      "classifier": {
+        "validation_score": 0.3936,
+        "metric": "macro_f1",
+        "train_seconds": 339.0
+      },
+      "cpu_latency_classifier": {
+        "p50_ms": 26.47,
+        "p95_ms": 33.9,
+        "messages_per_second": 76.8
+      }
+    }
+  ]
+}

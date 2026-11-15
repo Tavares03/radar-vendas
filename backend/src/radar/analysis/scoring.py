@@ -18,6 +18,7 @@ from radar.analysis.models import (
 )
 from radar.playbooks import Playbook
 from radar.taxonomy import RISK_TYPES, label_pt
+from radar.textutil import plural
 
 _HANDLING_VALUE = {"bem": 1.0, "parcial": 0.5, "respondida": 0.75, "mal": 0.0, "sem_resposta": 0.0}
 
@@ -61,7 +62,7 @@ def score_conversation(
     if handlings:
         value = sum(_HANDLING_VALUE.get(h, 0.0) for h in handlings) / len(handlings)
         bad = sum(1 for h in handlings if h in ("mal", "sem_resposta"))
-        text = f"{len(handlings)} objeção(ões); {bad} sem resposta adequada."
+        text = f"{plural(len(handlings), 'objeção', 'objeções')}; {bad} sem resposta adequada."
     else:
         value, text = 1.0, "Nenhuma objeção do cliente."
     criteria.append(
@@ -104,7 +105,7 @@ def score_conversation(
     if requests:
         answered = sum(1 for r in requests if r.answered)
         value = answered / len(requests)
-        text = f"{answered} de {len(requests)} pedido(s) atendido(s)."
+        text = f"Atendeu {answered} de {plural(len(requests), 'pedido', 'pedidos')}."
     else:
         value, text = 1.0, "O cliente não fez pedidos."
     criteria.append(
@@ -146,7 +147,9 @@ def score_conversation(
     value = max(0.0, 1.0 - 0.5 * ignored - (0.5 if metrics.follow_up_missing else 0.0))
     notes = []
     if ignored:
-        notes.append(f"{ignored} sinal(is) de compra sem resposta")
+        notes.append(
+            plural(ignored, "sinal de compra sem resposta", "sinais de compra sem resposta")
+        )
     if metrics.follow_up_missing:
         notes.append("faltou follow-up com o cliente que sumiu")
     criteria.append(

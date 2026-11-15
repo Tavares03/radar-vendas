@@ -10,6 +10,8 @@ PROMPT-radar-de-vendas.md
 .github
 .vscode
 .idea
+.playwright-mcp
+.superpowers
 
 # Ambientes e caches
 **/.venv
@@ -28,6 +30,9 @@ data/generated
 data/uploads
 data/media
 data/cache
+data/review
+data/hf
+data/ood
 models
 training/runs
 training/outputs

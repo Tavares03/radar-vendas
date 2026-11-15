@@ -18,7 +18,7 @@ mascarado antes de sair da máquina. PostgreSQL + pgvector guardam tudo; o paine
 
 **Stack:** Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2 + Alembic · PostgreSQL 17 + pgvector ·
 Valkey + RQ · faster-whisper · ONNX Runtime · Hugging Face Transformers (treino) · Next.js +
-TypeScript + Tailwind + shadcn/ui · Docker Compose · GitHub Actions · uv · ruff · mypy · pytest.
+TypeScript + Tailwind (componentes próprios) · Docker Compose · GitHub Actions · uv · ruff · mypy · pytest.
 
 ---
 
@@ -127,7 +127,7 @@ radar-vendas/
 │   │   └── cli.py           `radar`: criar admin, seed da demo, analisar arquivo, retenção
 │   ├── migrations/          Alembic
 │   └── tests/
-├── frontend/                Next.js (App Router) + Tailwind + shadcn/ui
+├── frontend/                Next.js (App Router) + Tailwind, componentes próprios
 ├── synthetic/               pacote `radar_synth`: gerador de conversas anotadas
 ├── training/                pacote `radar_training`: treino, avaliação, baselines, ONNX
 ├── evals/                   pacote `radar_evals`: avaliação do sistema inteiro
@@ -293,7 +293,7 @@ Cada fase lista entregas, interfaces que as fases seguintes consomem e como é v
 | 4 Dados sintéticos | concluída | gerador, splits por família, desafio, revisão e pacote HF; paráfrases e OOD por LLM prontos, aguardando chave no `.env` |
 | 5 Análise v1 | concluída | 644 testes (SQLite) e 643 (PostgreSQL); teste com LLM real pronto (`network`), aguardando chave no `.env` |
 | 6 Painel | concluída | 655 testes (SQLite) e 654 (PostgreSQL) no backend, 23 no painel; verificado no navegador como admin, gestor e vendedor, no computador e no celular; `radar seed-demo` |
-| 7 Modelos próprios | pendente | |
+| 7 Modelos próprios | concluída (falta publicar) | `pii-ner-ptbr` e `sales-intent-ptbr` treinados, avaliados contra regex, regras e TF-IDF e integrados (ONNX int8, quantização conferida na validação); com o NER, 100% das entidades do teste mascaradas (92,6% só com regex). Publicação no HF pronta em `scripts/publish_hf.py`, aguardando `HF_TOKEN`. Painel redesenhado e demonstração com equipe fictícia carregada na primeira subida |
 | 8 Space e evals | pendente | |
 | 9 Integrações | pendente | |
 | 10 Coach e insights | pendente | |

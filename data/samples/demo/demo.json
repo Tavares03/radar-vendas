@@ -1,0 +1,14 @@
+{
+  "ancora": "2026-11-16",
+  "empresa": "Plano Certo Consórcios",
+  "playbook": "consorcio",
+  "equipe": [
+    "Rafael Prado",
+    "Camila Duarte",
+    "Vera Nunes",
+    "Bruno Teixeira",
+    "Diego Farias"
+  ],
+  "conversas": 45,
+  "gerado_com": "radar-synth demo --seed 7"
+}

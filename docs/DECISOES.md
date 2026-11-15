@@ -275,3 +275,116 @@ herdadas. Os setores desativam a divulgação de condições de compra do varejo
 genérico.
 **Motivo:** sem isso, toda clínica perdia pontos de transparência por não falar de frete e
 troca.
+
+## D41 — BERTimbau base como encoder dos dois modelos
+**Decisão:** `neuralmind/bert-base-portuguese-cased` (MIT, 108 mi de parâmetros) para o NER e o
+classificador.
+**Alternativas:** BERTabaporu (PT-BR de redes sociais), mmBERT-small (ModernBERT multilíngue).
+**Motivo:** na comparação com a mesma semente e uma época (`training/reports/encoders.md`), o
+BERTimbau teve o melhor F1 nas duas tarefas (NER 0,971 contra 0,894 e 0,857; classificador F1
+macro 0,570 contra 0,508 e 0,394) e é o menor. O mmBERT-small é o mais rápido em CPU, mas em ONNX
+int8 o BERTimbau já responde em poucos milissegundos por mensagem.
+
+## D42 — Treino num extra, produção só com ONNX Runtime
+**Decisão:** PyTorch, Transformers e scikit-learn ficam no extra `train` do `radar-training`; o
+backend roda os modelos com `onnxruntime` e `tokenizers`, que já eram dependências. A CI não
+instala o extra e testa dados, métricas, baselines, avaliação e relatório com modelos ONNX
+minúsculos montados no teste (`radar.ml.testing`).
+**Motivo:** imagem Docker sem PyTorch e CI rápida, sem perder o teste do caminho de produção.
+
+## D43 — Tokenização e decodificação compartilhadas entre treino e produção
+**Decisão:** os rótulos BIO, a decodificação em trechos e a entrada do classificador (papel de
+quem escreveu + texto mascarado) vivem em `radar.ml` e o treino importa de lá. A avaliação final
+roda o ONNX int8 pelo próprio runtime de produção, e os limiares do classificador são calibrados
+nesse modelo, não no PyTorch.
+**Motivo:** o número do relatório é o do código que roda no Radar. Diferenças de quantização ou
+de decodificação aparecem na métrica em vez de ficarem escondidas.
+
+## D44 — NER medido também pela cobertura da máscara
+**Decisão:** além do F1 exato (tipo e fronteiras), o NER é avaliado pela fração de entidades que
+ficaram inteiras debaixo de alguma máscara, qualquer que seja o tipo previsto, e pela combinação
+regex + modelo, que é o que roda no Radar.
+**Motivo:** para a LGPD, um PIX mascarado como telefone está protegido; meio nome sem máscara
+não está. O F1 exato sozinho mede outra coisa.
+
+## D45 — Baseline LLM do NER só local
+**Decisão:** o baseline LLM zero-shot do classificador usa o texto mascarado e pode ir para a
+nuvem; o do NER recebe texto sem máscara e só roda no Ollama local.
+**Motivo:** a trava `ensure_masked` não abre exceção nem para dado sintético. Uma exceção "só
+para avaliação" é exatamente o tipo de atalho que vaza dado real depois.
+
+## D46 — Quantização só entra se passar na validação
+**Decisão:** `radar-train` mede cada receita de quantização na validação, pelo runtime de
+produção, contra o fp32. A primeira que perde no máximo 0,01 na métrica do treino vira o
+`model_quantized.onnx`; se nenhuma passar, o manifesto aponta para o fp32 e o relatório diz isso
+em negrito. A receita preferida é int8 por canal com faixa reduzida (7 bits); a de reserva, uint8.
+**Alternativas:** a quantização dinâmica padrão do ONNX Runtime (int8, uma escala por tensor);
+quantização estática com calibração; servir sempre o fp32.
+**Motivo:** a receita padrão derrubou o F1 do `pii-ner-ptbr` de 0,94 para 0,63 no teste sem
+nenhum aviso (telefone caiu para 2% de F1), a ponto de "regex + modelo" ter F1 exato pior que a
+regex sozinha. A paridade por mensagem não mostrou o problema, porque a maioria das mensagens não
+tem entidade nenhuma e concorda de graça. Com a faixa reduzida o int8 fica, na validação, em 0,950
+contra 0,953 do fp32, com o mesmo tamanho e a mesma latência. Como o resultado depende do modelo e da CPU, a
+conferência é parte do pipeline, não um cuidado de quem treina.
+
+## D47 — Demonstração: uma equipe fictícia, datas relativas ao dia da carga
+**Decisão:** a demonstração usa `data/samples/demo`: 45 conversas de consórcio de cinco
+vendedores fictícios ao longo de oito semanas, geradas por `radar-synth demo` a partir do mesmo
+gerador do dataset (o vendedor e as datas são trocados depois, sem mexer no código que define a
+versão do dataset). Os exports têm uma data-âncora fixa e `radar seed-demo` desloca as datas em
+semanas inteiras para a âncora cair na semana da carga. As dez amostras de
+`data/samples/synthetic` (um setor e um vendedor por conversa) continuam para testes, evals e
+Space.
+**Alternativas:** carregar as dez amostras como antes; gerar as conversas na hora da carga
+(obrigaria o backend a depender do gerador); mexer nas datas direto no banco depois de analisar.
+**Motivo:** com um vendedor por conversa e datas espalhadas por dois anos, o painel aparecia
+vazio justamente no que mais interessa mostrar: a tendência semanal tinha dois pontos e nenhum
+vendedor tinha evolução. Deslocar em semanas inteiras preserva o dia da semana e a hora, então
+as métricas de horário comercial continuam fazendo sentido; e deslocar antes de importar deixa a
+análise rodar sobre as datas que o painel mostra.
+
+## D48 — `RADAR_SEED_DEMO` carrega a demonstração na primeira subida, com senha sorteada
+**Decisão:** com `RADAR_SEED_DEMO=true` (padrão do Compose) e nenhum usuário no banco, a API cria
+a empresa de demonstração ao subir e manda a análise para a fila. A senha dos logins `@demo.radar`
+vem de `RADAR_DEMO_PASSWORD`; sem ela, é sorteada e aparece uma vez no log. Nunca roda com
+`RADAR_ENVIRONMENT=prod`, nem quando há administrador configurado no `.env`.
+**Alternativas:** senha padrão documentada; exigir sempre o `radar seed-demo` manual.
+**Motivo:** a variável existia e não fazia nada, e `docker compose up` terminava num painel sem
+dados e sem login. Senha fixa e pública é o tipo de coisa que acaba exposta numa instalação
+esquecida; sortear e mostrar no log dá o mesmo "um comando" sem deixar credencial conhecida.
+
+## D49 — A tendência semanal não depende do período escolhido
+**Decisão:** `GET /api/v1/overview` devolve sempre as oito semanas até a conversa mais recente,
+mesmo com `days=30`. Nota média, contagem de conversas e ranking da equipe seguem o período.
+**Motivo:** com 30 dias, as três primeiras semanas do gráfico vinham vazias, como se a equipe não
+tivesse atendido ninguém. O gráfico e o seletor de período respondem a perguntas diferentes.
+
+## D50 — Identidade do painel: mesa de auditor, com a cara do WhatsApp
+**Decisão:** barra lateral e login escuros (a "tela do radar", com a marca desenhada em SVG),
+conteúdo em folhas claras, Bricolage Grotesque nos títulos e na nota, Hanken Grotesk no texto. A
+conversa usa as cores do WhatsApp (fundo, bolha verde do vendedor); a evidência continua sendo
+marca-texto na cor da severidade e o dado pessoal, tarja. O resumo da visão geral é uma frase com
+os números marcados, não uma fileira de cartões. Gráfico semanal em SVG próprio (linha, faixa de
+"bom atendimento", anel vermelho na semana com alerta crítico, dica ao passar o mouse e tabela
+para leitor de tela).
+**Alternativas:** shadcn/ui e uma biblioteca de gráficos; manter a Atkinson Hyperlegible.
+**Motivo:** o painel é o que aparece em toda captura de tela do projeto. A Atkinson tem o zero
+cortado, que em tabelas de nota lê como erro de digitação. Um gráfico só, de uma série, não
+justifica uma dependência; os componentes do painel são poucos e específicos (bolha, tarja,
+marca-texto), então uma biblioteca de componentes genéricos acrescentaria mais do que resolveria.
+
+## D51 — Classificador só aponta o rótulo em que é confiável
+**Decisão:** os limiares do `sales-intent-ptbr` são calibrados na validação com um piso de
+precisão (`min_precision: 0.7` na configuração do treino), contando como a análise conta (rótulo
+de vendedor só em mensagem do vendedor). O rótulo que não alcança o piso em limiar nenhum vai
+para o manifesto desligado (limiar acima de 1) e o relatório o lista.
+**Alternativas:** limiar que maximiza o F1 de cada rótulo, sem piso; rebaixar a severidade do
+alerta apontado só pelo classificador; exigir confirmação do LLM para todo achado do modelo.
+**Motivo:** sem chave de LLM (o caso de quem acabou de instalar), um achado só do classificador
+vira alerta direto na fila. Com o limiar de melhor F1, a precisão dos rótulos de risco no teste
+era 57%: quase metade dos alertas que o modelo levantava sozinho era falsa, e "linguagem
+inadequada" errava em 7 de cada 10. A precisão na validação previu bem a do teste, então o piso
+funciona: com 0,7 os riscos apontados pelo modelo acertam 91% no teste, ao custo de revocação
+(59% para 35%) e de cinco rótulos desligados, que continuam cobertos pelas regras do playbook e
+pelo LLM. Para uma ferramenta de compliance, alerta falso custa mais do que alerta que só as
+regras pegam.

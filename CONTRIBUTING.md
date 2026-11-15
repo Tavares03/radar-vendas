@@ -24,7 +24,7 @@ para rodar com PostgreSQL.
 
 ```bash
 uv run ruff check . && uv run ruff format .
-uv run mypy backend/src synthetic/src evals/src
+uv run mypy backend/src synthetic/src evals/src training/src
 uv run pytest
 cd frontend && npm run lint && npm run typecheck && npm run build
 ```

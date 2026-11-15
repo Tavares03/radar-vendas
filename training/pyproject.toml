@@ -12,6 +12,20 @@ dependencies = [
     "typer>=0.15",
 ]
 
+[project.optional-dependencies]
+# Pesado (PyTorch, Transformers). Na raiz: `uv sync --all-packages --group train`.
+# O pacote importa tudo isso só dentro das funções de treino: dados, métricas e baselines rodam
+# sem PyTorch (e é assim que a CI testa).
+train = [
+    "torch>=2.15",
+    "transformers>=5.23",
+    "safetensors>=0.8",
+    "scikit-learn>=1.9",
+    "onnx>=1.23",
+    "onnxscript>=0.7",
+    "huggingface-hub>=2.4",
+]
+
 [project.scripts]
 radar-train = "radar_training.cli:app"
 

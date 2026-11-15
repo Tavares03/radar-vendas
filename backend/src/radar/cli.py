@@ -16,6 +16,7 @@ from radar.runtime import bootstrap as run_bootstrap
 from radar.runtime import init_storage
 from radar.services.accounts import AccountError, create_tenant, create_user
 from radar.taxonomy import Role
+from radar.textutil import plural
 
 app = typer.Typer(
     name="radar",
@@ -105,9 +106,9 @@ def retention_run(
     for report in reports:
         typer.echo(
             f"{names.get(report.tenant_id, report.tenant_id)}: "
-            f"{report.raw_messages_purged} mensagem(ns) com texto original, "
-            f"{report.media_files_deleted} áudio(s), "
-            f"{report.conversations_deleted} conversa(s)"
+            f"{plural(report.raw_messages_purged, 'mensagem', 'mensagens')} com texto original, "
+            f"{plural(report.media_files_deleted, 'áudio', 'áudios')}, "
+            f"{plural(report.conversations_deleted, 'conversa', 'conversas')}"
         )
 
 
@@ -144,8 +145,30 @@ def seed_demo_cmd(
 
 
 @app.command()
+def models() -> None:
+    """Mostra os modelos próprios em uso (NER e classificador) e de onde vieram."""
+    from radar.ml.loader import load_classifier, load_ner
+
+    settings = get_settings()
+    for label, choice, model in (
+        ("NER de dados pessoais", settings.ner_model, load_ner(settings)),
+        ("Classificador de mensagens", settings.classifier_model, load_classifier(settings)),
+    ):
+        if model is None:
+            status = "desligado" if choice == "off" else "não encontrado (a camada fica de fora)"
+            typer.echo(f"{label}: {status} [{choice}]")
+        else:
+            typer.echo(f"{label}: {model.name} em {model.bundle.path} [{choice}]")
+    typer.echo(f"Pasta de modelos: {settings.models_dir}")
+
+
+@app.command()
 def bootstrap() -> None:
-    """Prepara o primeiro uso: pastas, admin inicial (se configurado no .env) e dados da demo."""
+    """Prepara o primeiro uso: pastas e admin inicial (se configurado no .env).
+
+    A demonstração (``RADAR_SEED_DEMO``) é carregada pela API na primeira subida, quando a fila
+    de jobs já está no ar; para carregá-la na hora, use ``radar seed-demo``.
+    """
     settings = get_settings()
     init_storage(settings)
     run_bootstrap(settings)

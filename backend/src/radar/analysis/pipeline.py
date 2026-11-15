@@ -42,7 +42,7 @@ from radar.taxonomy import (
     SenderRole,
     category_of,
 )
-from radar.textutil import fold
+from radar.textutil import duration_pt, fold
 
 log = get_logger(__name__)
 
@@ -419,7 +419,8 @@ def analyze_conversation(
             state.finding(
                 "demora_resposta",
                 slow[1],
-                f"Resposta depois de {slow[2]} minutos úteis (limite: {limit}).",
+                f"Resposta depois de {duration_pt(slow[2])} de horário comercial "
+                f"(limite: {duration_pt(limit)}).",
                 {"metrica": {"minutos_uteis": slow[2], "mensagem_do_cliente": slow[0]}},
             )
         )

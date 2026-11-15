@@ -71,6 +71,44 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Cliente do painel tipado a partir do OpenAPI da API, com teste que impede o contrato de ficar
   desatualizado; testes de componente com Vitest e Testing Library.
 - `desativar` no playbook também vale para divulgações obrigatórias herdadas.
+- Modelos próprios: `pii-ner-ptbr` (NER de dados pessoais em PT-BR) e `sales-intent-ptbr`
+  (classificador multirrótulo de mensagens), ajustados sobre o BERTimbau só com dados sintéticos e
+  servidos em ONNX int8 na CPU, sem PyTorch em produção.
+- Runtime `radar.ml`: o NER entra como camada do detector de dados pessoais (com janelas para
+  texto longo) e o classificador como camada da análise; `RADAR_NER_MODEL` e
+  `RADAR_CLASSIFIER_MODEL` aceitam `auto`, `off`, pasta ou id do Hugging Face; falha ao carregar
+  deixa a camada de fora sem derrubar nada. Comando `radar models`.
+- `radar-train` (extra `train`): comparação de encoders, treino com semente fixa e configuração
+  versionada, exportação ONNX com quantização int8, limiares calibrados no modelo int8, avaliação
+  pelo runtime de produção contra regex, regras dos playbooks, TF-IDF e LLM zero-shot, relatórios
+  em `training/reports/` e model cards.
+- `scripts/publish_hf.py`: publica o dataset e os modelos no Hugging Face (só com `--yes` e
+  `HF_TOKEN`; sem isso, mostra o plano).
+- `docs/TREINAMENTO.md`: como treinar, avaliar, usar e publicar os modelos.
+- Quantização com conferência de qualidade: cada receita é medida na validação contra o fp32 e só
+  entra se perder no máximo 0,01; a escolha e as medidas vão para o relatório. Se nenhuma passar,
+  o runtime usa o fp32 (inclusive ao baixar do Hugging Face).
+- Piso de precisão na calibração do classificador (`min_precision`, padrão 0,7): rótulo que não
+  acerta o bastante na validação fica desligado em vez de gerar alerta falso. A precisão dos
+  riscos apontados só pelo modelo no teste sobe de 57% para 91%.
+- Demonstração nova: a "Plano Certo Consórcios", uma equipe fictícia de cinco vendedores com 45
+  conversas em oito semanas (`data/samples/demo`, gerada por `radar-synth demo`), com as datas
+  acompanhando o dia da carga e a equipe já cadastrada.
+- `RADAR_SEED_DEMO=true` passa a carregar a demonstração na primeira subida, em segundo plano,
+  quando o banco não tem usuários (nunca em produção). A senha vem de `RADAR_DEMO_PASSWORD` ou é
+  sorteada e mostrada uma vez no log.
+- Painel redesenhado: barra lateral e login com a marca do radar, tipografia nova, selo de nota
+  com a mesma régua em todo o painel, visão geral que resume o período numa frase com os números
+  marcados, gráfico semanal de verdade (linha, faixa de bom atendimento, semana com alerta
+  crítico, dica ao passar o mouse e tabela para leitor de tela), conversa com as cores do
+  WhatsApp, nota num arco, alertas mais graves primeiro e envio de arquivos arrastando para a
+  página. Ícone próprio no navegador.
+- Contador de alertas críticos em aberto na navegação.
+
+### Mudado
+- A tendência semanal da visão geral cobre sempre as oito semanas, qualquer que seja o período.
+- Textos do painel sem "(s)": "1 objeção", "Atendeu 0 de 1 pedido", e a demora na resposta em
+  horas e minutos ("9 h 21 min de horário comercial") em vez de minutos crus.
 
 ### Corrigido
 - Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).
@@ -80,3 +118,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   compra do varejo (fidelidade, troca, frete) e perdiam pontos de transparência por ela.
 - A justificativa de transparência listava os identificadores das divulgações em vez da
   descrição em português.
+- O `pii-ner-ptbr` quantizado errava muito mais que o original (F1 no teste de 0,63 contra 0,94
+  do fp32; telefone com 2% de F1), a ponto de "regex + modelo" ter F1 pior que a regex sozinha.
+  Com a quantização por canal e faixa reduzida, o int8 fica em 0,94 no teste e a combinação que
+  roda no Radar deixa 100% das entidades do teste debaixo de máscara (eram 96%).
+- `RADAR_SEED_DEMO` era lida e ignorada: `docker compose up` terminava num painel sem dados.
+- A data de referência da visão geral aparecia um dia antes no horário do Brasil.
+- O painel dava erro de console em desenvolvimento ("segment was dropped") porque a casca só
+  desenhava a página depois de carregar o usuário; agora a casca e a página aparecem juntas.
+- No celular, a visão geral rolava para o lado por causa da tabela para leitor de tela do gráfico.

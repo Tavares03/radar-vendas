@@ -427,7 +427,10 @@ def parse_chat(text: str, *, max_messages: int | None = None) -> ParsedChat:
 
     if invalid_dates:
         warnings.append(
-            f"{invalid_dates} linha(s) pareciam mensagens, mas tinham data inválida e foram "
+            "1 linha parecia mensagem, mas tinha data inválida e foi tratada como continuação "
+            "da mensagem anterior."
+            if invalid_dates == 1
+            else f"{invalid_dates} linhas pareciam mensagens, mas tinham data inválida e foram "
             "tratadas como continuação da mensagem anterior."
         )
     if not any(m.author is not None for m in messages):
