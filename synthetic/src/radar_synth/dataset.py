@@ -231,6 +231,8 @@ def write_dataset(
         "notice": "Dados 100% sintéticos. Nenhuma pessoa ou empresa real.",
     }
     (out_dir / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
     return manifest

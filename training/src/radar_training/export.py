@@ -209,7 +209,9 @@ def write_manifest(
         base_model=config.base_model,
         dataset_version=dataset_version,
     )
-    (folder / MANIFEST).write_text(manifest.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    (folder / MANIFEST).write_text(
+        manifest.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     return manifest
 
 

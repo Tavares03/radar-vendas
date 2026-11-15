@@ -65,7 +65,9 @@ def train(
         "torch": torch.__version__,
         "transformers": transformers.__version__,
     }
-    (folder / "training.json").write_text(json.dumps(training, indent=2) + "\n", encoding="utf-8")
+    (folder / "training.json").write_text(
+        json.dumps(training, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     return training
 
 
@@ -122,7 +124,9 @@ def export(
         training["quantizacao"] = quantization
         # Com --skip-train a configuração pode ter mudado depois do treino (ex.: min_precision).
         training["config"] = config.model_dump()
-        training_file.write_text(json.dumps(training, indent=2) + "\n", encoding="utf-8")
+        training_file.write_text(
+            json.dumps(training, indent=2) + "\n", encoding="utf-8", newline="\n"
+        )
 
 
 def evaluate(
@@ -151,10 +155,12 @@ def evaluate(
         "gerado_em": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     text = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
-    (folder / "metrics.json").write_text(text, encoding="utf-8")
+    (folder / "metrics.json").write_text(text, encoding="utf-8", newline="\n")
     reports_dir.mkdir(parents=True, exist_ok=True)
-    (reports_dir / f"{manifest['name']}.json").write_text(text, encoding="utf-8")
-    (reports_dir / f"{manifest['name']}.md").write_text(render_report(report), encoding="utf-8")
+    (reports_dir / f"{manifest['name']}.json").write_text(text, encoding="utf-8", newline="\n")
+    (reports_dir / f"{manifest['name']}.md").write_text(
+        render_report(report), encoding="utf-8", newline="\n"
+    )
     (folder / "README.md").write_text(
         render_card(
             report,
@@ -162,5 +168,6 @@ def evaluate(
             dataset_id=f"{namespace}/{DATASET_NAME}",
         ),
         encoding="utf-8",
+        newline="\n",
     )
     return report

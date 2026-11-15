@@ -119,8 +119,10 @@ def write(
     folder.mkdir(parents=True, exist_ok=True)
     payload = {"dataset_version": dataset_version, "epochs": epochs, "results": list(results)}
     (folder / "encoders.json").write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
     )
     (folder / "encoders.md").write_text(
-        render(results, dataset_version=dataset_version, epochs=epochs), encoding="utf-8"
+        render(results, dataset_version=dataset_version, epochs=epochs),
+        encoding="utf-8",
+        newline="\n",
     )

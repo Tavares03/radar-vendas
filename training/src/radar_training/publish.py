@@ -32,7 +32,7 @@ def model_plan(folder: Path, repo_id: str, *, dataset_id: str) -> list[Path]:
     """Reescreve o model card com o id final e lista os arquivos que vão para o Hub."""
     report = json.loads((folder / "metrics.json").read_text(encoding="utf-8"))
     (folder / "README.md").write_text(
-        render_card(report, repo_id=repo_id, dataset_id=dataset_id), encoding="utf-8"
+        render_card(report, repo_id=repo_id, dataset_id=dataset_id), encoding="utf-8", newline="\n"
     )
     files = [
         path
