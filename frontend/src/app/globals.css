@@ -1,32 +1,78 @@
 @import "tailwindcss";
 
 /*
- * Identidade: o painel é a mesa de um auditor. Evidência aparece como marca-texto (a cor diz a
- * severidade) e dado pessoal aparece como tarja de LGPD. Fora isso, papel frio e tinta azul-escura:
- * as cores fortes só aparecem onde há severidade.
+ * Identidade: o painel é a mesa de um auditor que lê WhatsApp. Evidência aparece como marca-texto
+ * (a cor diz a severidade), dado pessoal aparece como tarja de LGPD e a conversa tem a cara do
+ * aplicativo de onde veio. O verde do "sinal" (radar e WhatsApp) é a única cor de marca; vermelho,
+ * âmbar e azul-petróleo só aparecem onde há severidade.
  */
 @theme {
-  --color-papel: #f5f7fa;
+  --color-papel: #f2f4f7;
   --color-folha: #ffffff;
-  --color-tinta: #14213d;
-  --color-tinta-suave: #2b3a5c;
-  --color-grafite: #5b6478;
-  --color-linha: #d9dee7;
-  --color-linha-forte: #b8c0cf;
+  --color-tinta: #0f1a33;
+  --color-tinta-suave: #2a3757;
+  --color-grafite: #5c667c;
+  --color-linha: #dfe3ea;
+  --color-linha-forte: #bcc4d2;
+
+  /* Barra lateral e painel do login: a "tela do radar". */
+  --color-noite: #0b1428;
+  --color-noite-suave: #182544;
+  --color-noite-linha: #24335a;
+  --color-nevoa: #a9b4cc;
+  --color-sinal: #2fd98a;
+  --color-sinal-forte: #0d7d4c;
+
   --color-critico: #c9184a;
-  --color-critico-marca: #ffd1da;
-  --color-atencao: #9a6700;
-  --color-atencao-marca: #ffe9b0;
+  --color-critico-marca: #ffd3dc;
+  --color-atencao: #8a5a00;
+  --color-atencao-forte: #f5a700;
+  --color-atencao-marca: #ffe7a8;
   --color-info: #156f86;
   --color-info-marca: #d3eef5;
-  --color-ok: #2d6a4f;
-  --color-ok-marca: #d8f3dc;
-  --color-bolha-vendedor: #d6e0f1;
-  --color-transcricao: #eceff4;
+  --color-ok: #1f6f4a;
+  --color-ok-marca: #d4f3df;
 
-  --font-sans: var(--font-atkinson), "Segoe UI", system-ui, sans-serif;
+  /* A conversa, com as cores do aplicativo. */
+  --color-conversa: #efe9e0;
+  --color-bolha-vendedor: #d9fdd3;
+  --color-bolha-cliente: #ffffff;
 
-  --radius-bolha: 0.9rem;
+  --font-sans: var(--font-hanken), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-hanken), "Segoe UI", system-ui, sans-serif;
+
+  --radius-bolha: 0.75rem;
+
+  --shadow-folha: 0 1px 2px rgb(15 26 51 / 0.05), 0 8px 24px -16px rgb(15 26 51 / 0.18);
+
+  --animate-varredura: varredura 6s linear infinite;
+  --animate-pulso: pulso 2.4s ease-out infinite;
+  --animate-brilho: brilho 1.4s ease-in-out infinite;
+}
+
+@keyframes varredura {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulso {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+@keyframes brilho {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 :root {
@@ -37,7 +83,13 @@ body {
   background: var(--color-papel);
   color: var(--color-tinta);
   font-family: var(--font-sans);
-  font-feature-settings: "tnum" 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
 }
 
 /* Números de nota e contagens alinham em colunas. */
@@ -48,40 +100,67 @@ body {
 /* Tarja de dado pessoal mascarado ([CPF], [TELEFONE]...). */
 .tarja {
   display: inline-block;
-  padding: 0 0.4em;
+  padding: 0 0.45em;
   margin: 0 0.05em;
   border-radius: 0.2rem;
   background: var(--color-tinta);
   color: var(--color-papel);
-  font-size: 0.78em;
+  font-size: 0.74em;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-  vertical-align: 0.06em;
+  letter-spacing: 0.03em;
+  line-height: 1.55;
+  vertical-align: 0.08em;
 }
 
 /* Marca-texto da evidência: a cor é a severidade do alerta. */
-mark.evidencia {
+mark.evidencia,
+.marca {
   color: inherit;
-  padding: 0.05em 0.1em;
-  border-radius: 0.15rem;
+  padding: 0.05em 0.14em;
+  margin: 0 -0.04em;
+  border-radius: 0.2em 0.35em 0.25em 0.3em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-mark.evidencia[data-severity="critico"] {
-  background: linear-gradient(transparent 12%, var(--color-critico-marca) 12%, var(--color-critico-marca) 92%, transparent 92%);
+mark.evidencia[data-severity="critico"],
+.marca[data-severity="critico"] {
+  background: linear-gradient(transparent 10%, var(--color-critico-marca) 10%, var(--color-critico-marca) 92%, transparent 92%);
   box-shadow: inset 0 -2px 0 var(--color-critico);
 }
-mark.evidencia[data-severity="atencao"] {
-  background: linear-gradient(transparent 12%, var(--color-atencao-marca) 12%, var(--color-atencao-marca) 92%, transparent 92%);
+mark.evidencia[data-severity="atencao"],
+.marca[data-severity="atencao"] {
+  background: linear-gradient(transparent 10%, var(--color-atencao-marca) 10%, var(--color-atencao-marca) 92%, transparent 92%);
 }
-mark.evidencia[data-severity="info"] {
-  background: linear-gradient(transparent 12%, var(--color-info-marca) 12%, var(--color-info-marca) 92%, transparent 92%);
+mark.evidencia[data-severity="info"],
+.marca[data-severity="info"] {
+  background: linear-gradient(transparent 10%, var(--color-info-marca) 10%, var(--color-info-marca) 92%, transparent 92%);
+}
+.marca[data-severity="ok"] {
+  background: linear-gradient(transparent 10%, var(--color-ok-marca) 10%, var(--color-ok-marca) 92%, transparent 92%);
+}
+
+/* Campo de seleção com a seta desenhada (o nativo muda de cara em cada sistema). */
+.campo-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%235c667c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  padding-right: 2rem;
+}
+
+/* Fundo da conversa: o pontilhado discreto lembra o papel de parede do aplicativo. */
+.papel-conversa {
+  background-color: var(--color-conversa);
+  background-image: radial-gradient(rgb(15 26 51 / 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-tinta);
   outline-offset: 2px;
+}
+.sobre-noite :focus-visible {
+  outline-color: var(--color-sinal);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -89,6 +168,7 @@ mark.evidencia[data-severity="info"] {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

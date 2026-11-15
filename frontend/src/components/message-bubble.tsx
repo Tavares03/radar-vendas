@@ -46,22 +46,22 @@ export function MessageBubble({
   return (
     <div
       id={`m-${message.id}`}
-      className={`flex scroll-mt-24 ${seller ? "justify-end" : "justify-start"}`}
+      className={`flex scroll-mt-28 ${seller ? "justify-end" : "justify-start"}`}
     >
       <article
         aria-label={`${seller ? "Vendedor" : "Cliente"} às ${formatTime(message.sent_at)}`}
-        className={`max-w-[85%] rounded-[var(--radius-bolha)] px-3.5 py-2 text-[0.95rem] leading-relaxed shadow-[0_1px_0_var(--color-linha)] sm:max-w-[70%] ${
-          seller ? "rounded-br-sm bg-bolha-vendedor" : "rounded-bl-sm bg-folha"
-        } ${highlighted ? "ring-2 ring-tinta" : ""}`}
+        className={`max-w-[86%] rounded-[var(--radius-bolha)] px-3 pt-1.5 pb-1 text-[0.95rem] leading-relaxed shadow-[0_1px_0.5px_rgb(15_26_51/0.16)] transition-shadow sm:max-w-[72%] ${
+          seller ? "rounded-tr-sm bg-bolha-vendedor" : "rounded-tl-sm bg-bolha-cliente"
+        } ${highlighted ? "ring-2 ring-tinta ring-offset-2 ring-offset-conversa" : ""}`}
       >
         {audio ? (
-          <p className="mb-0.5 flex items-center gap-1 text-xs font-medium text-grafite">
+          <p className="mb-0.5 flex items-center gap-1 text-xs font-semibold text-sinal-forte">
             <Mic aria-hidden size={13} /> Áudio transcrito
             {message.audio_seconds ? `, ${Math.round(message.audio_seconds)} s` : ""}
           </p>
         ) : null}
         <p className="whitespace-pre-wrap break-words">{body}</p>
-        <p className="mt-0.5 text-right text-[0.7rem] text-grafite">
+        <p className="numeros -mt-0.5 text-right text-[0.68rem] text-grafite">
           {message.edited ? "editada, " : ""}
           {formatTime(message.sent_at)}
         </p>

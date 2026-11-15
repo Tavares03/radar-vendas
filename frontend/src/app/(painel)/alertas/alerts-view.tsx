@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -9,9 +10,15 @@ import { EvidenceInContext } from "@/components/evidence-in-context";
 import { Button, Empty, ErrorNote, Loading, PageTitle, SelectField, SeverityTag, StatusTag } from "@/components/ui";
 import type { Schemas } from "@/lib/api/client";
 import { can, useAlerts, useMe, useSellers, useAssignees } from "@/lib/api/hooks";
-import { ALERT_TYPES, relativeTime, typeLabel } from "@/lib/format";
+import { ALERT_TYPES, plural, relativeTime, typeLabel } from "@/lib/format";
 
 const PAGE = 25;
+
+const STRIPE: Record<string, string> = {
+  critico: "border-l-critico",
+  atencao: "border-l-atencao-forte",
+  info: "border-l-info",
+};
 
 export function AlertsView() {
   const params = useSearchParams();
@@ -36,6 +43,7 @@ export function AlertsView() {
     limit,
   };
   const { data, error, mutate } = useAlerts(filters);
+  const filtered = Boolean(severity || type || seller || status !== "abertos");
 
   function setFilter(name: string, value: string) {
     const next = new URLSearchParams(params.toString());
@@ -47,8 +55,11 @@ export function AlertsView() {
 
   return (
     <>
-      <PageTitle title="Alertas" />
-      <div className="mb-5 flex flex-wrap gap-3">
+      <PageTitle
+        title="Alertas"
+        lead="Cada alerta aponta o trecho exato da conversa. Revise, marque o que for falso positivo e atribua um responsável."
+      />
+      <div className="mb-5 flex flex-wrap items-end gap-3">
         <SelectField label="Situação" value={status} onChange={(e) => setFilter("status", e.target.value)}>
           <option value="abertos">Pedem atenção</option>
           <option value="aberto">Abertos</option>
@@ -82,6 +93,11 @@ export function AlertsView() {
             ))}
           </SelectField>
         ) : null}
+        {filtered ? (
+          <Button variant="quiet" onClick={() => router.replace(pathname, { scroll: false })}>
+            Limpar filtros
+          </Button>
+        ) : null}
       </div>
 
       {error ? <ErrorNote error={error} /> : null}
@@ -93,46 +109,63 @@ export function AlertsView() {
       ) : null}
       {data && data.items.length > 0 ? (
         <>
-          <p className="mb-2 text-sm text-grafite">
-            {data.total} alerta{data.total === 1 ? "" : "s"}, os mais graves primeiro.
+          <p className="mb-3 text-sm text-grafite">
+            {plural(data.total, "alerta", "alertas")}, os mais graves primeiro.
           </p>
-          <ul className="divide-y divide-linha border-y border-linha bg-folha">
+          <ul className="space-y-2.5">
             {data.items.map((alert) => {
               const expanded = openId === alert.id;
               return (
-                <li key={alert.id} className="px-4 py-3">
+                <li
+                  key={alert.id}
+                  className={`rounded-xl border border-linha border-l-4 bg-folha shadow-folha ${STRIPE[alert.severity] ?? "border-l-linha-forte"}`}
+                >
                   <button
                     type="button"
-                    className="w-full text-left"
+                    className="w-full rounded-xl px-4 py-3 text-left"
                     aria-expanded={expanded}
                     onClick={() => setOpenId(expanded ? null : alert.id)}
                   >
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm">
                       <SeverityTag severity={alert.severity} />
-                      <span className="font-semibold">{alert.label}</span>
-                      <span className="text-grafite">
-                        {alert.seller_name ?? "Vendedor não identificado"} com {alert.customer_label}
-                      </span>
-                      <span className="ml-auto flex items-baseline gap-3">
+                      <span className="font-bold">{alert.label}</span>
+                      <span className="ml-auto flex items-center gap-2.5">
                         <StatusTag status={alert.status} />
-                        <span className="text-xs text-grafite">{relativeTime(alert.created_at)}</span>
+                        <ChevronDown
+                          aria-hidden
+                          size={17}
+                          className={`text-grafite transition-transform ${expanded ? "rotate-180" : ""}`}
+                        />
                       </span>
                     </div>
-                    <blockquote className="mt-1.5 max-w-3xl leading-relaxed">
-                      <EvidenceInContext alert={alert} />
-                    </blockquote>
+                    {alert.message_text || alert.evidence ? (
+                      <blockquote className="mt-2 max-w-3xl text-[1.02rem] leading-relaxed">
+                        <EvidenceInContext alert={alert} />
+                      </blockquote>
+                    ) : (
+                      <p className="mt-2 max-w-3xl text-[0.95rem] leading-relaxed text-tinta-suave">{alert.explanation}</p>
+                    )}
+                    <p className="mt-1.5 text-xs text-grafite">
+                      {alert.seller_name ?? "Vendedor não identificado"} com {alert.customer_label}, detectado{" "}
+                      {relativeTime(alert.created_at)}
+                      {alert.assigned_to ? `, com ${alert.assigned_to.name}` : ""}
+                    </p>
                     {alert.contested ? (
-                      <p className="mt-1 text-xs text-atencao">A regra apontou e o LLM discordou: vale olhar com cuidado.</p>
+                      <p className="mt-1 text-xs font-medium text-atencao">
+                        A regra apontou e o LLM discordou: vale olhar com cuidado.
+                      </p>
                     ) : null}
                   </button>
                   {expanded ? (
-                    <div className="mt-3 space-y-3">
-                      <p className="max-w-3xl text-sm">{alert.explanation}</p>
+                    <div className="space-y-3 border-t border-linha px-4 pt-3 pb-4">
+                      {alert.message_text || alert.evidence ? (
+                        <p className="max-w-3xl text-sm text-tinta-suave">{alert.explanation}</p>
+                      ) : null}
                       <Link
                         href={`/conversas/${alert.conversation_id}${alert.message_id ? `#m-${alert.message_id}` : ""}`}
-                        className="inline-block text-sm font-medium underline underline-offset-2"
+                        className="inline-block text-sm font-semibold underline underline-offset-2"
                       >
-                        Abrir a conversa neste trecho
+                        {alert.message_id ? "Abrir a conversa neste trecho" : "Abrir a conversa"}
                       </Link>
                       {can(me, "revisar") ? (
                         <AlertReview
@@ -150,7 +183,7 @@ export function AlertsView() {
             })}
           </ul>
           {data.total > data.items.length ? (
-            <div className="mt-4 text-center">
+            <div className="mt-5 text-center">
               <Button onClick={() => setLimit((current) => current + PAGE)}>Carregar mais</Button>
             </div>
           ) : null}

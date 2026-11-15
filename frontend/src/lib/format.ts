@@ -80,6 +80,11 @@ export const stageLabel = (value: string | null | undefined) => (value ? (STAGE[
 export const sentimentLabel = (value: string | null | undefined) =>
   value ? (SENTIMENT[value] ?? value) : "—";
 
+/** "1 conversa", "3 conversas". */
+export function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
 export function formatScore(value: number | null | undefined): string {
   return value === null || value === undefined ? "—" : String(Math.round(value));
 }
@@ -100,10 +105,16 @@ export function formatTime(iso: string): string {
   return new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 }
 
-export function formatDay(iso: string): string {
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(
-    new Date(iso),
-  );
+export function formatDay(iso: string, timeZone?: string): string {
+  // Data sem hora ("2026-11-05") é um dia do calendário, não a meia-noite UTC: lida como UTC,
+  // apareceria como o dia anterior em qualquer fuso a oeste de Greenwich (o Brasil inteiro).
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: dateOnly ? "UTC" : timeZone,
+  }).format(new Date(iso));
 }
 
 export function relativeTime(iso: string, now: Date = new Date()): string {

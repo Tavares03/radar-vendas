@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-// Uma família só, desenhada para legibilidade: o painel é lido com atenção, trecho por trecho.
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
+// Texto e números: uma grotesca neutra, com algarismos tabulares para as colunas de nota.
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
-  // A fonte não tem métricas para o fallback ajustado; o fallback é a fonte do sistema.
-  adjustFontFallback: false,
+});
+
+// Títulos e a nota: uma grotesca com mais caráter, que dá voz ao painel sem atrapalhar a leitura.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
+  subsets: ["latin"],
+  axes: ["opsz"],
 });
 
 export const metadata: Metadata = {
@@ -22,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${atkinson.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${hanken.variable} ${bricolage.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

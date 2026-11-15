@@ -29,8 +29,8 @@ export type AlertFilters = {
   offset?: number;
 };
 
-export function useAlerts(filters: AlertFilters) {
-  return useSWR(["alerts", filters], () =>
+export function useAlerts(filters: AlertFilters, enabled = true) {
+  return useSWR(enabled ? ["alerts", filters] : null, () =>
     unwrap(api.GET("/api/v1/alerts", { params: { query: filters } })),
   options);
 }
@@ -104,6 +104,7 @@ export function usePlaybook(slug: string | undefined) {
 }
 
 const PERMISSION = {
+  importar: "conversations:write",
   revisar: "alerts:review",
   revelar: "pii:reveal",
   gerir: "users:manage",

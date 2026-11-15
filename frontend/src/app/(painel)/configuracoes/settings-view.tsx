@@ -3,15 +3,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Button, ErrorNote, Loading, PageTitle, SelectField } from "@/components/ui";
+import { Button, ErrorNote, FIELD, Loading, PageTitle, Panel, SelectField } from "@/components/ui";
 import { api, type Schemas, unwrap } from "@/lib/api/client";
 import { can, useMe, usePlaybooks, useUsers } from "@/lib/api/hooks";
-import { formatDateTime, roleLabel } from "@/lib/format";
+import { formatDateTime, plural, roleLabel } from "@/lib/format";
 
 type Settings = Schemas["TenantSettings"];
 type Role = Schemas["Role"];
 
-const INPUT = "w-28 rounded-md border border-linha-forte bg-folha px-2 py-1.5 text-tinta numeros";
+const INPUT = `numeros w-28 ${FIELD}`;
+const LABEL = "text-[0.8rem] font-medium text-grafite";
 const ROLES: Role[] = ["admin", "gestor", "auditor", "vendedor"];
 
 function NumberField({
@@ -27,7 +28,7 @@ function NumberField({
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className={LABEL}>{label}</span>
       <input
         type="number"
         min={0}
@@ -116,7 +117,7 @@ function SettingsForm({
       await retention.mutate();
       setMessage({
         kind: "ok",
-        text: `Retenção aplicada: ${report.raw_messages_purged} mensagem(ns), ${report.media_files_deleted} áudio(s) e ${report.conversations_deleted} conversa(s).`,
+        text: `Retenção aplicada: ${plural(report.raw_messages_purged, "mensagem", "mensagens")}, ${plural(report.media_files_deleted, "áudio", "áudios")} e ${plural(report.conversations_deleted, "conversa", "conversas")}.`,
       });
     } catch (exc) {
       setMessage({ kind: "erro", text: exc instanceof Error ? exc.message : "A retenção falhou." });
@@ -129,18 +130,18 @@ function SettingsForm({
   return (
     <>
       <PageTitle title="Configurações" />
-      <fieldset disabled={!editable || pending} className="space-y-10">
-        <section aria-labelledby="empresa" className="space-y-4">
+      <fieldset disabled={!editable || pending} className="space-y-6">
+        <Panel aria-labelledby="empresa" className="space-y-5 p-5">
           <h2 id="empresa" className="text-lg font-bold">
             Empresa e análise
           </h2>
           <div className="flex flex-wrap gap-6">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Nome da empresa</span>
+              <span className={LABEL}>Nome da empresa</span>
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="w-72 rounded-md border border-linha-forte bg-folha px-2 py-1.5"
+                className={`w-72 max-w-full ${FIELD}`}
               />
             </label>
             <SelectField label="Playbook padrão" value={playbook} onChange={(e) => setPlaybook(e.target.value)}>
@@ -175,15 +176,16 @@ function SettingsForm({
               onChange={(v) => update("follow_up_hours", v)}
             />
           </div>
-        </section>
+        </Panel>
 
-        <section aria-labelledby="privacidade" className="space-y-4">
+        <Panel aria-labelledby="privacidade" className="space-y-5 p-5">
           <h2 id="privacidade" className="text-lg font-bold">
             Privacidade e retenção
           </h2>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              className="size-4 accent-tinta"
               checked={settings.mask_person_names ?? true}
               onChange={(event) => update("mask_person_names", event.target.checked)}
             />
@@ -196,6 +198,7 @@ function SettingsForm({
                 <label key={role} className="flex items-center gap-1.5">
                   <input
                     type="checkbox"
+                    className="size-4 accent-tinta"
                     checked={reveal.has(role)}
                     onChange={(event) => {
                       const next = new Set(reveal);
@@ -231,20 +234,28 @@ function SettingsForm({
             />
           </div>
           {retention.data ? (
-            <div className="rounded-lg border border-linha bg-folha p-3 text-sm">
+            <div className="rounded-lg bg-papel p-4 text-sm">
               <p>
                 Se a retenção rodasse agora, apagaria o original de{" "}
-                <strong className="numeros">{retention.data.pending.raw_messages_purged}</strong> mensagem(ns),{" "}
-                <strong className="numeros">{retention.data.pending.media_files_deleted}</strong> áudio(s) e{" "}
-                <strong className="numeros">{retention.data.pending.conversations_deleted}</strong> conversa(s). O
-                agendador aplica a cada 6 horas.
+                <strong className="numeros">
+                  {plural(retention.data.pending.raw_messages_purged, "mensagem", "mensagens")}
+                </strong>
+                ,{" "}
+                <strong className="numeros">
+                  {plural(retention.data.pending.media_files_deleted, "áudio", "áudios")}
+                </strong>{" "}
+                e{" "}
+                <strong className="numeros">
+                  {plural(retention.data.pending.conversations_deleted, "conversa", "conversas")}
+                </strong>
+                . O agendador aplica a cada 6 horas.
               </p>
-              <Button variant="danger" className="mt-2" onClick={runRetention}>
+              <Button variant="danger" className="mt-3" onClick={runRetention}>
                 Aplicar retenção agora
               </Button>
             </div>
           ) : null}
-        </section>
+        </Panel>
 
         {editable ? (
           <div className="flex items-center gap-3">
@@ -263,32 +274,34 @@ function SettingsForm({
       ) : null}
 
       {users.data ? (
-        <section aria-labelledby="equipe" className="mt-12">
+        <section aria-labelledby="equipe" className="mt-10">
           <h2 id="equipe" className="mb-3 text-lg font-bold">
             Pessoas com acesso
           </h2>
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-linha-forte text-grafite">
-              <tr>
-                <th className="py-2 font-medium">Nome</th>
-                <th className="py-2 font-medium">E-mail</th>
-                <th className="py-2 font-medium">Papel</th>
-                <th className="py-2 font-medium">Último acesso</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linha">
-              {users.data.items.map((user) => (
-                <tr key={user.id} className={user.is_active ? "" : "text-grafite"}>
-                  <td className="py-2">{user.name}</td>
-                  <td className="py-2">{user.email}</td>
-                  <td className="py-2">{roleLabel(user.role)}</td>
-                  <td className="py-2 text-grafite">
-                    {user.last_login_at ? formatDateTime(user.last_login_at) : "nunca entrou"}
-                  </td>
+          <Panel className="overflow-x-auto">
+            <table className="w-full min-w-[34rem] text-left text-sm">
+              <thead className="border-b border-linha text-xs text-grafite">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium">Nome</th>
+                  <th className="px-4 py-2.5 font-medium">E-mail</th>
+                  <th className="px-4 py-2.5 font-medium">Papel</th>
+                  <th className="px-4 py-2.5 font-medium">Último acesso</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-linha">
+                {users.data.items.map((user) => (
+                  <tr key={user.id} className={user.is_active ? "" : "text-grafite"}>
+                    <td className="px-4 py-2.5 font-semibold">{user.name}</td>
+                    <td className="px-4 py-2.5">{user.email}</td>
+                    <td className="px-4 py-2.5">{roleLabel(user.role)}</td>
+                    <td className="numeros px-4 py-2.5 text-grafite">
+                      {user.last_login_at ? formatDateTime(user.last_login_at) : "nunca entrou"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Panel>
         </section>
       ) : null}
     </>

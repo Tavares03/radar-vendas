@@ -1,10 +1,11 @@
 "use client";
 
+import { ChevronLeft, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
-import { Button, ErrorNote, Loading, PageTitle, SeverityTag } from "@/components/ui";
+import { Button, ErrorNote, Loading, PageTitle, Panel, SeverityTag } from "@/components/ui";
 import { api, type Schemas, unwrap } from "@/lib/api/client";
 import { can, useMe, usePlaybook } from "@/lib/api/hooks";
 import { typeLabel } from "@/lib/format";
@@ -102,17 +103,21 @@ function PlaybookEditor({
 
   return (
     <>
-      <Link href="/playbooks" className="text-sm text-grafite hover:text-tinta">
-        Playbooks
+      <Link href="/playbooks" className="mb-2 inline-flex items-center gap-1 text-sm text-grafite hover:text-tinta">
+        <ChevronLeft aria-hidden size={15} /> Playbooks
       </Link>
       <PageTitle title={data.name}>
-        <span className="text-sm text-grafite">
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            data.origin === "empresa" ? "bg-ok-marca text-ok" : "bg-linha/70 text-grafite"
+          }`}
+        >
           {data.origin === "empresa" ? `Versão ${data.version} da empresa` : "Padrão do Radar"}
         </span>
       </PageTitle>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <section aria-labelledby="yaml">
-          <h2 id="yaml" className="mb-2 font-bold">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <Panel aria-labelledby="yaml" className="p-5">
+          <h2 id="yaml" className="mb-3 text-lg font-bold">
             Regras em YAML
           </h2>
           <textarea
@@ -122,14 +127,19 @@ function PlaybookEditor({
             spellCheck={false}
             wrap="off"
             aria-label="Conteúdo do playbook em YAML"
-            className="h-[32rem] w-full rounded-md border border-linha-forte bg-folha p-3 font-[ui-monospace,Consolas,monospace] text-[0.8rem] leading-relaxed"
+            className="sobre-noite h-[32rem] w-full rounded-lg border border-noite-linha bg-noite p-4 font-[ui-monospace,Consolas,monospace] text-[0.8rem] leading-relaxed text-[#dfe6f5] [color-scheme:dark] focus-visible:outline-2 focus-visible:outline-sinal-forte"
           />
           {editable ? (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Button variant="primary" onClick={save} disabled={pending || yaml === data.yaml}>
                 {data.origin === "empresa" ? "Salvar nova versão" : "Salvar como playbook da empresa"}
               </Button>
-              <a href="https://github.com/Tavares03/radar-vendas/blob/main/docs/PLAYBOOKS.md" className="text-sm underline" target="_blank" rel="noreferrer">
+              <a
+                href="https://github.com/Tavares03/radar-vendas/blob/main/docs/PLAYBOOKS.md"
+                className="text-sm font-medium underline underline-offset-2"
+                target="_blank"
+                rel="noreferrer"
+              >
                 Como escrever um playbook
               </a>
             </div>
@@ -137,16 +147,19 @@ function PlaybookEditor({
             <p className="mt-2 text-sm text-grafite">Só a gestão pode editar playbooks.</p>
           )}
           {message ? (
-            <p role={message.kind === "erro" ? "alert" : "status"} className={`mt-3 text-sm ${message.kind === "erro" ? "text-critico" : "text-ok"}`}>
+            <p
+              role={message.kind === "erro" ? "alert" : "status"}
+              className={`mt-3 text-sm font-medium ${message.kind === "erro" ? "text-critico" : "text-ok"}`}
+            >
               {message.text}
             </p>
           ) : null}
-        </section>
-        <section aria-labelledby="testar">
-          <h2 id="testar" className="mb-2 font-bold">
+        </Panel>
+        <Panel aria-labelledby="testar" className="p-5">
+          <h2 id="testar" className="mb-2 text-lg font-bold">
             Testar com mensagens
           </h2>
-          <p className="mb-2 text-sm text-grafite">
+          <p className="mb-3 text-sm text-grafite">
             Uma mensagem por linha, começando por <strong>vendedor:</strong> ou <strong>cliente:</strong>. O
             teste usa o texto do editor, mesmo antes de salvar.
           </p>
@@ -154,24 +167,35 @@ function PlaybookEditor({
             value={messages}
             onChange={(event) => setMessages(event.target.value)}
             aria-label="Mensagens de teste"
-            className="h-40 w-full rounded-md border border-linha-forte bg-folha p-3 text-sm"
+            className="h-40 w-full rounded-lg border border-linha-forte bg-folha p-3 text-sm leading-relaxed"
           />
           <Button className="mt-2" onClick={test} disabled={pending}>
-            Testar regras
+            <FlaskConical aria-hidden size={16} /> Testar regras
           </Button>
           {result ? (
             <div className="mt-4 space-y-3" aria-live="polite">
               {result.hits.length === 0 ? (
-                <p className="text-sm">Nenhuma regra disparou.</p>
+                <p className="rounded-lg bg-ok-marca/50 px-3 py-2 text-sm">Nenhuma regra disparou.</p>
               ) : (
                 <ul className="space-y-2">
                   {result.hits.map((hit, index) => (
-                    <li key={index} className="border-l-2 border-linha-forte pl-3 text-sm">
-                      <span className="text-grafite">Linha {hit.message_index + 1}: </span>
-                      {hit.severity ? <SeverityTag severity={hit.severity} /> : <span className="font-medium">sinal do cliente</span>}{" "}
-                      <span className="font-semibold">{typeLabel(hit.type)}</span>
-                      <p className="text-tinta-suave">
-                        Trecho: <mark className="evidencia" data-severity={hit.severity ?? "info"}>{hit.evidence}</mark>
+                    <li key={index} className="rounded-lg border border-linha px-3 py-2.5 text-sm">
+                      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        {hit.severity ? (
+                          <SeverityTag severity={hit.severity} />
+                        ) : (
+                          <span className="rounded-full bg-linha/70 px-2 py-0.5 text-xs font-bold text-grafite">
+                            sinal do cliente
+                          </span>
+                        )}
+                        <span className="font-bold">{typeLabel(hit.type)}</span>
+                        <span className="ml-auto text-xs text-grafite">linha {hit.message_index + 1}</span>
+                      </p>
+                      <p className="mt-1.5 text-tinta-suave">
+                        Trecho:{" "}
+                        <mark className="evidencia" data-severity={hit.severity ?? "info"}>
+                          {hit.evidence}
+                        </mark>
                       </p>
                     </li>
                   ))}
@@ -186,7 +210,7 @@ function PlaybookEditor({
               ) : null}
             </div>
           ) : null}
-        </section>
+        </Panel>
       </div>
     </>
   );

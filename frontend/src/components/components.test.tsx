@@ -7,6 +7,8 @@ import type { Schemas } from "@/lib/api/client";
 import { AlertReview } from "./alert-review";
 import { MessageBubble } from "./message-bubble";
 import { ScorePanel } from "./score-panel";
+import { WeeklyTrend } from "./trend";
+import { Initials, ScoreBadge, scoreBand, SeverityTag, StatusTag } from "./ui";
 
 type Message = Schemas["MessageOut"];
 type Alert = Schemas["AlertOut"];
@@ -156,5 +158,76 @@ describe("AlertReview", () => {
     expect(current).toHaveAttribute("aria-pressed", "true");
     expect(current).toBeDisabled();
     expect(within(group).getByRole("button", { name: "Reabrir" })).toBeEnabled();
+  });
+});
+
+describe("WeeklyTrend", () => {
+  const weeks = [
+    { week_start: "2026-10-05", conversations: 0, average_score: null, critical_alerts: 0 },
+    { week_start: "2026-10-12", conversations: 3, average_score: 71.4, critical_alerts: 1 },
+    { week_start: "2026-10-19", conversations: 1, average_score: 88, critical_alerts: 0 },
+  ];
+
+  it("descreve cada semana, sem transformar semana vazia em nota zero", () => {
+    render(<WeeklyTrend weeks={weeks} />);
+    const table = screen.getByRole("table", { name: "Nota média por semana" });
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual([
+      "sem conversas",
+      "nota 71 em 3 conversas, 1 alerta crítico em aberto",
+      "nota 88 em 1 conversa",
+    ]);
+  });
+
+  it("mostra a semana em foco para quem navega pelo teclado", async () => {
+    render(<WeeklyTrend weeks={weeks} />);
+    await userEvent.tab();
+    await userEvent.tab();
+    expect(screen.getByRole("status")).toHaveTextContent("nota 71 em 3 conversas");
+  });
+
+  it("sem nenhuma nota, diz que ainda não há conversas em vez de desenhar um gráfico vazio", () => {
+    render(<WeeklyTrend weeks={[weeks[0]]} />);
+    expect(screen.getByText(/Ainda não há conversas analisadas/)).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+});
+
+describe("selos", () => {
+  it("a régua da nota é a mesma em todo o painel", () => {
+    expect([100, 80, 79.9, 60, 59.9, 0].map(scoreBand)).toEqual([
+      "ok",
+      "ok",
+      "atencao",
+      "atencao",
+      "critico",
+      "critico",
+    ]);
+    expect(scoreBand(null)).toBe("vazio");
+    render(<ScoreBadge score={null} />);
+    expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("severidade e status sempre por extenso, nunca só a cor", () => {
+    render(
+      <>
+        <SeverityTag severity="critico" />
+        <StatusTag status="falso_positivo" />
+      </>,
+    );
+    expect(screen.getByText("Crítico")).toBeInTheDocument();
+    expect(screen.getByText("Falso positivo")).toBeInTheDocument();
+  });
+
+  it("iniciais de quem tem um nome só, dois ou vários", () => {
+    const { container } = render(
+      <>
+        <Initials name="Vera" />
+        <Initials name="Vera Nunes" />
+        <Initials name="Diego de Souza Farias" />
+        <Initials name="Cliente 61F0" />
+      </>,
+    );
+    expect(Array.from(container.children).map((el) => el.textContent)).toEqual(["V", "VN", "DF", "CF"]);
   });
 });

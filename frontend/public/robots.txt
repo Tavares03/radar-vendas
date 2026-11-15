@@ -1,0 +1,3 @@
+# O painel é uma ferramenta interna: nada aqui deve ser indexado por buscadores.
+User-agent: *
+Disallow: /

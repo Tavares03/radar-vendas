@@ -19,7 +19,7 @@ npm run build
 |---|---|
 | `src/app/login/` | entrada; a única página fora do painel |
 | `src/app/(painel)/` | as páginas do painel. Cada `page.tsx` é fino e só envolve a view (componente cliente) num `Suspense` |
-| `src/components/` | peças compartilhadas: bolha de mensagem, texto com destaques, painel da nota, revisão de alerta, gráfico semanal, casca do app |
+| `src/components/` | peças compartilhadas: bolha de mensagem, texto com destaques, painel da nota, revisão de alerta, gráfico semanal, casca do app, marca do radar e os blocos de `ui.tsx` (botão, campo, selo de nota, folha) |
 | `src/lib/api/` | cliente tipado (`openapi-fetch`) e hooks SWR; `openapi.json` e `schema.d.ts` são gerados |
 | `src/lib/highlight.ts` | divide o texto em trechos: tarja de dado pessoal, evidência de alerta e texto comum |
 | `src/lib/format.ts` | rótulos e datas em português |
@@ -43,8 +43,14 @@ Um teste do backend falha se o `openapi.json` ficar desatualizado, e a CI falha 
 
 ## Identidade visual
 
-O painel é a mesa de um auditor. A evidência de um alerta aparece como marca-texto na cor da
-severidade (`mark.evidencia[data-severity]`), e dado pessoal mascarado aparece como tarja
-(`.tarja`). Fora isso, papel claro e tinta azul-escura: cor forte só onde há severidade. A fonte
-é a Atkinson Hyperlegible Next, desenhada para leitura atenta. Os tokens ficam em
-`src/app/globals.css`.
+O painel é a mesa de um auditor que lê WhatsApp. A evidência de um alerta aparece como
+marca-texto na cor da severidade (`mark.evidencia[data-severity]`, e `.marca` fora de mensagens),
+e dado pessoal mascarado aparece como tarja (`.tarja`). A conversa usa as cores do aplicativo
+(`papel-conversa`, bolha verde do vendedor). A barra lateral e o login são a "tela do radar":
+fundo `noite` e o verde `sinal`, a única cor de marca; vermelho, âmbar e azul-petróleo só aparecem
+onde há severidade. Títulos e notas em Bricolage Grotesque, texto em Hanken Grotesk. Os tokens
+ficam em `src/app/globals.css`.
+
+A nota usa a mesma régua em todo lugar (`scoreBand` em `ui.tsx`): 80 ou mais é bom atendimento,
+60 ou mais pede ajustes, abaixo disso tem problemas. O gráfico semanal (`trend.tsx`) é SVG
+próprio: uma série, sem biblioteca, com dica ao passar o mouse e tabela para leitor de tela.

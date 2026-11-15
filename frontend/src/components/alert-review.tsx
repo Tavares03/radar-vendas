@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api, type Schemas, unwrap } from "@/lib/api/client";
 import { statusLabel } from "@/lib/format";
 
-import { Button } from "./ui";
+import { Button, FIELD } from "./ui";
 
 type Alert = Schemas["AlertOut"];
 type Assignee = Schemas["AssigneeOut"];
@@ -47,7 +47,7 @@ export function AlertReview({
   }
 
   return (
-    <div className="space-y-3 border-t border-linha pt-3">
+    <div className="space-y-3 rounded-lg bg-papel/70 p-3">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Mudar o status do alerta">
         {ACTIONS.map((action) => (
           <Button
@@ -66,7 +66,7 @@ export function AlertReview({
           </Button>
         ) : null}
       </div>
-      <label className="flex flex-col gap-1 text-sm text-grafite">
+      <label className="flex max-w-xs flex-col gap-1 text-[0.8rem] font-medium text-grafite">
         Responsável
         <select
           value={alert.assigned_to?.id ?? ""}
@@ -74,7 +74,7 @@ export function AlertReview({
           onChange={(event) =>
             save(event.target.value ? { assigned_to_user_id: event.target.value } : { unassign: true })
           }
-          className="rounded-md border border-linha-forte bg-folha px-2 py-1.5 text-tinta"
+          className={`campo-select ${FIELD}`}
         >
           <option value="">Ninguém</option>
           {users.map((user) => (
@@ -84,14 +84,14 @@ export function AlertReview({
           ))}
         </select>
       </label>
-      <label className="flex flex-col gap-1 text-sm text-grafite">
+      <label className="flex flex-col gap-1 text-[0.8rem] font-medium text-grafite">
         Nota da revisão
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={2}
           maxLength={2000}
-          className="rounded-md border border-linha-forte bg-folha px-2 py-1.5 text-tinta"
+          className={FIELD}
           placeholder="O que foi verificado, combinado com o vendedor…"
         />
       </label>

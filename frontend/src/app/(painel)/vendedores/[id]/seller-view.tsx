@@ -1,12 +1,22 @@
 "use client";
 
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { WeeklyTrend } from "@/components/trend";
-import { ErrorNote, Loading, PageTitle, SeverityTag } from "@/components/ui";
+import {
+  ErrorNote,
+  Initials,
+  Loading,
+  Meter,
+  Panel,
+  ScoreBadge,
+  SectionTitle,
+  SeverityTag,
+} from "@/components/ui";
 import { useSellerPerformance } from "@/lib/api/hooks";
-import { formatDateTime, formatScore } from "@/lib/format";
+import { formatDateTime, formatScore, plural } from "@/lib/format";
 
 export function SellerView() {
   const { id } = useParams<{ id: string }>();
@@ -14,78 +24,82 @@ export function SellerView() {
   if (error) return <ErrorNote error={error} />;
   if (!data) return <Loading />;
 
+  const criteria = [...data.criteria].sort(
+    (a, b) => a.average_points / a.maximum - b.average_points / b.maximum,
+  );
   return (
     <>
-      <Link href="/vendedores" className="text-sm text-grafite hover:text-tinta">
-        Vendedores
+      <Link href="/vendedores" className="inline-flex items-center gap-1 text-sm text-grafite hover:text-tinta">
+        <ChevronLeft aria-hidden size={15} /> Vendedores
       </Link>
-      <PageTitle title={data.seller.display_name}>
-        <p className="text-right">
-          <span className="numeros block text-4xl leading-none font-extrabold">{formatScore(data.average_score)}</span>
-          <span className="text-sm text-grafite">
-            nota média em {data.conversations} {data.conversations === 1 ? "conversa" : "conversas"}
+      <header className="mt-2 mb-7 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <Initials name={data.seller.display_name} className="size-12 text-base" />
+          <div className="min-w-0">
+            <h1 className="text-[2rem] leading-[1.1] font-extrabold">{data.seller.display_name}</h1>
+            <p className="mt-1 text-sm text-grafite">
+              {plural(data.conversations, "conversa analisada", "conversas analisadas")}
+            </p>
+          </div>
+        </div>
+        <p className="flex items-center gap-3">
+          <span className="text-right text-sm leading-tight text-grafite">
+            nota
+            <br />
+            média
           </span>
+          <ScoreBadge score={data.average_score} size="lg" />
         </p>
-      </PageTitle>
+      </header>
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <section aria-labelledby="evolucao">
-          <h2 id="evolucao" className="mb-3 text-lg font-bold">
-            Evolução
-          </h2>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Panel aria-labelledby="evolucao" className="p-5">
+          <SectionTitle id="evolucao">Evolução</SectionTitle>
           <WeeklyTrend weeks={data.weekly} />
-        </section>
+        </Panel>
 
-        <section aria-labelledby="criterios">
-          <h2 id="criterios" className="mb-3 text-lg font-bold">
-            Onde ganha e onde perde pontos
-          </h2>
-          <ul className="space-y-2">
-            {[...data.criteria]
-              .sort((a, b) => a.average_points / a.maximum - b.average_points / b.maximum)
-              .map((criterion) => {
-                const ratio = criterion.average_points / criterion.maximum;
-                return (
-                  <li key={criterion.id} className="text-sm">
-                    <div className="flex justify-between">
-                      <span>{criterion.label}</span>
-                      <span className="numeros text-grafite">
-                        {formatScore(criterion.average_points)} de {criterion.maximum}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-1.5 rounded-full bg-linha">
-                      <div
-                        className={`h-full rounded-full ${ratio >= 0.8 ? "bg-tinta" : ratio >= 0.5 ? "bg-[#ffb703]" : "bg-critico"}`}
-                        style={{ width: `${Math.max(2, ratio * 100)}%` }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-          </ul>
-        </section>
+        <Panel aria-labelledby="criterios" className="p-5">
+          <SectionTitle id="criterios">Onde ganha e onde perde pontos</SectionTitle>
+          {criteria.length ? (
+            <ul className="space-y-3">
+              {criteria.map((criterion) => (
+                <li key={criterion.id} className="text-sm">
+                  <div className="mb-1.5 flex justify-between gap-3">
+                    <span className="font-medium">{criterion.label}</span>
+                    <span className="numeros text-grafite">
+                      {formatScore(criterion.average_points)} de {criterion.maximum}
+                    </span>
+                  </div>
+                  <Meter value={criterion.average_points} maximum={criterion.maximum} label={criterion.label} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-grafite">Ainda não há conversas analisadas.</p>
+          )}
+        </Panel>
 
-        <section aria-labelledby="objecoes">
-          <h2 id="objecoes" className="mb-3 text-lg font-bold">
-            Objeções que enfrentou
-          </h2>
+        <Panel aria-labelledby="objecoes" className="p-5">
+          <SectionTitle id="objecoes">Objeções que enfrentou</SectionTitle>
           {data.objections.length ? (
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-linha-forte text-grafite">
+              <thead className="border-b border-linha text-xs text-grafite">
                 <tr>
-                  <th className="py-1.5 font-medium">Objeção</th>
-                  <th className="py-1.5 text-right font-medium">Bem</th>
-                  <th className="py-1.5 text-right font-medium">Parcial</th>
-                  <th className="py-1.5 text-right font-medium">Mal ou sem resposta</th>
+                  <th className="py-2 font-medium">Objeção</th>
+                  <th className="py-2 text-right font-medium">Bem</th>
+                  <th className="py-2 text-right font-medium">Parcial</th>
+                  <th className="py-2 text-right font-medium">Mal ou sem resposta</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-linha">
                 {data.objections.map((item) => (
                   <tr key={item.type}>
-                    <td className="py-1.5">{item.label}</td>
-                    <td className="numeros py-1.5 text-right">{item.bem}</td>
-                    <td className="numeros py-1.5 text-right">{item.parcial}</td>
-                    <td className={`numeros py-1.5 text-right ${item.mal + item.sem_resposta ? "font-semibold text-critico" : ""}`}>
+                    <td className="py-2">{item.label}</td>
+                    <td className="numeros py-2 text-right">{item.bem}</td>
+                    <td className="numeros py-2 text-right">{item.parcial}</td>
+                    <td
+                      className={`numeros py-2 text-right ${item.mal + item.sem_resposta ? "font-bold text-critico" : ""}`}
+                    >
                       {item.mal + item.sem_resposta}
                     </td>
                   </tr>
@@ -95,20 +109,21 @@ export function SellerView() {
           ) : (
             <p className="text-sm text-grafite">Nenhuma objeção registrada.</p>
           )}
-        </section>
+        </Panel>
 
-        <section aria-labelledby="riscos">
-          <h2 id="riscos" className="mb-3 text-lg font-bold">
-            Alertas em aberto
-          </h2>
+        <Panel aria-labelledby="riscos" className="p-5">
+          <SectionTitle id="riscos">Alertas em aberto</SectionTitle>
           {data.alerts_by_type.length ? (
-            <ul className="space-y-1 text-sm">
+            <ul className="divide-y divide-linha text-sm">
               {data.alerts_by_type.map((item) => (
-                <li key={item.type} className="flex justify-between">
-                  <Link href={`/alertas?seller=${data.seller.id}&type=${item.type}`} className="hover:underline">
-                    {item.label}
+                <li key={item.type}>
+                  <Link
+                    href={`/alertas?seller=${data.seller.id}&type=${item.type}`}
+                    className="group flex justify-between gap-3 py-2"
+                  >
+                    <span className="group-hover:underline">{item.label}</span>
+                    <span className="numeros font-semibold">{item.count}</span>
                   </Link>
-                  <span className="numeros">{item.count}</span>
                 </li>
               ))}
             </ul>
@@ -118,34 +133,39 @@ export function SellerView() {
           {data.improvements.length ? (
             <>
               <h3 className="mt-5 font-bold">Pontos a melhorar</h3>
-              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed marker:text-grafite">
                 {data.improvements.map((text) => (
                   <li key={text}>{text}</li>
                 ))}
               </ul>
             </>
           ) : null}
-        </section>
+        </Panel>
       </div>
 
-      <section aria-labelledby="recentes" className="mt-10">
-        <h2 id="recentes" className="mb-3 text-lg font-bold">
-          Conversas recentes
-        </h2>
-        <ul className="divide-y divide-linha border-y border-linha">
-          {data.recent.map((conversation) => (
-            <li key={conversation.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-2.5 text-sm">
-              <Link href={`/conversas/${conversation.id}`} className="font-semibold hover:underline">
-                {conversation.customer_label}
-              </Link>
-              <span className="text-grafite">
-                {conversation.last_message_at ? formatDateTime(conversation.last_message_at) : ""}
-              </span>
-              <span className="numeros ml-auto font-semibold">nota {formatScore(conversation.score)}</span>
-              {conversation.max_severity ? <SeverityTag severity={conversation.max_severity} /> : null}
-            </li>
-          ))}
-        </ul>
+      <section aria-labelledby="recentes" className="mt-8">
+        <SectionTitle id="recentes">Conversas recentes</SectionTitle>
+        <Panel>
+          <ul className="divide-y divide-linha">
+            {data.recent.map((conversation) => (
+              <li key={conversation.id}>
+                <Link
+                  href={`/conversas/${conversation.id}`}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 text-sm hover:bg-papel/60"
+                >
+                  <span className="font-semibold">{conversation.customer_label}</span>
+                  <span className="numeros text-grafite">
+                    {conversation.last_message_at ? formatDateTime(conversation.last_message_at) : ""}
+                  </span>
+                  <span className="ml-auto flex items-center gap-3">
+                    {conversation.max_severity ? <SeverityTag severity={conversation.max_severity} /> : null}
+                    <ScoreBadge score={conversation.score} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       </section>
     </>
   );
