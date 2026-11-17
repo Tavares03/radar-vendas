@@ -31,6 +31,24 @@ def process_conversation_job(conversation_id: str, tenant_id: str) -> None:
     process_conversation(uuid.UUID(conversation_id), uuid.UUID(tenant_id))
 
 
+def prepare_conversation_job(conversation_id: str, tenant_id: str) -> None:
+    from radar.services.processing import prepare_conversation
+
+    prepare_conversation(uuid.UUID(conversation_id), uuid.UUID(tenant_id))
+
+
+def enqueue_prepare(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
+    """Transcreve e mascara logo (alguns segundos depois, para juntar uma rajada de mensagens)."""
+    enqueue(
+        prepare_conversation_job,
+        str(conversation_id),
+        str(tenant_id),
+        job_id=f"preparar-{conversation_id}",
+        delay=timedelta(seconds=5),
+        job_timeout=CONVERSATION_TIMEOUT,
+    )
+
+
 def enqueue_import(import_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
     enqueue(process_import_job, str(import_id), str(tenant_id), job_id=f"import-{import_id}")
 
@@ -49,6 +67,15 @@ def enqueue_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> No
 def heartbeat() -> None:
     """Prova de vida do conjunto agendador → fila → worker."""
     log.info("heartbeat")
+
+
+@periodic("whatsapp_pausa", every=timedelta(minutes=5))
+def analyze_idle_whatsapp() -> None:
+    """Analisa as conversas do WhatsApp conectado que deram uma pausa."""
+    from radar.config import get_settings
+    from radar.integrations.whatsapp import enqueue_idle_conversations
+
+    enqueue_idle_conversations(get_settings())
 
 
 @periodic("retencao", every=timedelta(hours=6))

@@ -18,7 +18,8 @@ Proteção de Dados (Lei 13.709/2018).
 7. [Direitos do titular](#7-direitos-do-titular)
 8. [Controle de acesso e auditoria](#8-controle-de-acesso-e-auditoria)
 9. [Segurança](#9-segurança)
-10. [Checklist para quem vai usar](#10-checklist-para-quem-vai-usar)
+10. [WhatsApp conectado (ao vivo)](#10-whatsapp-conectado-ao-vivo)
+11. [Checklist para quem vai usar](#11-checklist-para-quem-vai-usar)
 
 ---
 
@@ -65,6 +66,8 @@ art. 11 com cuidado.
 | Nome do arquivo enviado | `imports.filename` | cifrado | com a conversa |
 | Índice de titulares | `pii_index` | só HMAC-SHA256 por empresa, nunca o dado | com a conversa ou a pedido do titular |
 | Fotos, vídeos e documentos do export | — | **não são guardados** | — |
+| WhatsApp conectado: sessão do número | banco `evolution` (Evolution API) | só no servidor; a Evolution não guarda as mensagens | ao desconectar |
+| WhatsApp conectado: contatos que deixaram de ser capturados | `whatsapp_ignored_contacts` | só HMAC, nunca o telefone | com a conexão |
 | Arquivo enviado (zip/txt) | `RADAR_DATA_DIR/uploads/` | — | assim que é processado |
 | Trilha de auditoria | `audit_logs` | sem dado pessoal de clientes | não é apagada pela API |
 
@@ -223,7 +226,21 @@ dado pessoal consultado. A API não altera nem apaga registros de auditoria.
 - **Incidentes:** em caso de incidente de segurança com risco aos titulares, o controlador deve
   comunicar a ANPD e os titulares (art. 48). A trilha de auditoria ajuda a dimensionar o ocorrido.
 
-## 10. Checklist para quem vai usar
+## 10. WhatsApp conectado (ao vivo)
+
+Conectar o número inteiro do vendedor traz **tudo** o que chega nele. Por isso:
+
+- **Recomende WhatsApp Business com número só de trabalho.** O painel mostra essa recomendação
+  antes de conectar. Grupos, status e canais nunca entram, e o histórico anterior à conexão não é
+  importado.
+- **Conversa pessoal sai com aprovação:** o vendedor pede a remoção e a gestão aprova; a conversa
+  é apagada (mensagens, áudios e análise) e aquele contato deixa de ser capturado. O pedido e a
+  decisão ficam na auditoria.
+- **Informe a equipe** de que o número conectado é monitorado, e os clientes, no aviso de
+  privacidade, como para o export.
+- O Radar só lê: não envia mensagens nem marca nada como lido.
+
+## 11. Checklist para quem vai usar
 
 - [ ] Definir e documentar a base legal (e o teste de balanceamento, se for legítimo interesse).
 - [ ] Atualizar o aviso de privacidade para clientes e informar a equipe de vendas.
@@ -235,3 +252,5 @@ dado pessoal consultado. A API não altera nem apaga registros de auditoria.
 - [ ] Publicar com HTTPS e `RADAR_COOKIE_SECURE=true`.
 - [ ] Definir quem atende pedidos de titulares e o prazo de resposta.
 - [ ] Revisar periodicamente a trilha de auditoria.
+- [ ] Com o WhatsApp conectado: usar números só de trabalho (de preferência WhatsApp Business) e
+      informar a equipe de que eles são monitorados.

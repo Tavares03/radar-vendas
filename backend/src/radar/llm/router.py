@@ -70,6 +70,7 @@ class LLMRouter:
         max_retries: int = 2,
         backoff_seconds: float = 2.0,
         max_wait_seconds: float = 20.0,
+        throttle_wait_seconds: float = 65.0,
         breaker_threshold: int = 3,
         max_tokens: int = 1800,
         temperature: float = 0.1,
@@ -79,7 +80,11 @@ class LLMRouter:
         self.cache = cache
         self.max_retries = max_retries
         self.backoff = backoff_seconds
+        #: Espera aceitável num provedor antes de tentar o próximo da lista.
         self.max_wait = max_wait_seconds
+        #: Com todos os provedores só no limite de taxa, quanto esperar pelo primeiro que liberar
+        #: (a janela dos limites é de 60 s). A análise roda no worker, em segundo plano.
+        self.throttle_wait = throttle_wait_seconds
         self.max_tokens = max_tokens
         self.temperature = temperature
         self._sleep = sleep
@@ -87,21 +92,30 @@ class LLMRouter:
             p.name: CircuitBreaker(threshold=breaker_threshold) for p in self.providers
         }
 
+    def _breaker(self, provider: Provider) -> CircuitBreaker:
+        return self._breakers.setdefault(provider.name, CircuitBreaker())
+
+    def _estimate(self, messages: Sequence[dict[str, str]]) -> int:
+        return sum(_estimate_tokens(m["content"]) for m in messages) + self.max_tokens
+
     def _parse[T: BaseModel](self, text: str, schema: type[T]) -> T:
         return schema.model_validate(repair_json(text))
+
+    def _chat(
+        self, provider: Provider, messages: list[dict[str, str]], temperature: float
+    ) -> ChatResult:
+        estimate = self._estimate(messages)
+        wait = provider.limiter.wait_time(estimate)
+        if wait:
+            self._sleep(wait)
+        provider.limiter.consume(estimate)
+        return provider.chat(messages, max_tokens=self.max_tokens, temperature=temperature)
 
     def _call[T: BaseModel](
         self, provider: Provider, messages: list[dict[str, str]], schema: type[T]
     ) -> tuple[T, ChatResult]:
         """Uma tentativa completa num provedor: chamada + validação + (se preciso) um reparo."""
-        estimate = sum(_estimate_tokens(m["content"]) for m in messages) + self.max_tokens
-        wait = provider.limiter.wait_time(estimate)
-        if wait > self.max_wait:
-            raise ProviderError(f"limite de taxa (espera de {wait:.0f} s)", retryable=False)
-        if wait:
-            self._sleep(wait)
-        provider.limiter.consume(estimate)
-        result = provider.chat(messages, max_tokens=self.max_tokens, temperature=self.temperature)
+        result = self._chat(provider, messages, self.temperature)
         try:
             return self._parse(result.text, schema), result
         except (ValueError, ValidationError) as exc:
@@ -118,7 +132,7 @@ class LLMRouter:
                 ),
             },
         ]
-        fixed = provider.chat(repair, max_tokens=self.max_tokens, temperature=0)
+        fixed = self._chat(provider, repair, 0)
         tokens = ChatResult(
             text=fixed.text,
             provider=result.provider,
@@ -130,6 +144,58 @@ class LLMRouter:
             return self._parse(fixed.text, schema), tokens
         except (ValueError, ValidationError) as exc:
             raise ProviderError("JSON inválido mesmo após reparo", retryable=False) from exc
+
+    def _attempt[T: BaseModel](
+        self,
+        provider: Provider,
+        messages: list[dict[str, str]],
+        schema: type[T],
+        cache_key: str,
+        errors: list[str],
+    ) -> StructuredResult[T] | None:
+        """Tenta um provedor (com retries). ``None`` se não deu; o motivo vai para ``errors``."""
+        breaker = self._breaker(provider)
+        for attempt in range(self.max_retries + 1):
+            try:
+                value, result = self._call(provider, messages, schema)
+            except ProviderError as exc:
+                if exc.retry_after is not None and exc.retry_after > self.max_wait:
+                    # O provedor pediu uma pausa longa (cota do minuto ou do dia): segue para o
+                    # próximo e só volta a este depois do prazo, sem contar como falha.
+                    breaker.pause(exc.retry_after)
+                    errors.append(f"{provider.name}: {exc} (pausado por {exc.retry_after:.0f} s)")
+                    log.warning(
+                        "llm_provedor_pediu_pausa",
+                        provedor=provider.name,
+                        segundos=round(exc.retry_after),
+                    )
+                    return None
+                if exc.retryable and attempt < self.max_retries:
+                    delay = exc.retry_after
+                    self._sleep(delay if delay is not None else self.backoff * (2**attempt))
+                    continue
+                errors.append(f"{provider.name}: {exc}")
+                breaker.record_failure()
+                log.warning("llm_provedor_falhou", provedor=provider.name, erro=str(exc))
+                return None
+            breaker.record_success()
+            if self.cache is not None:
+                self.cache.set(
+                    cache_key,
+                    {
+                        "value": value.model_dump(mode="json"),
+                        "provider": result.provider,
+                        "model": result.model,
+                    },
+                )
+            return StructuredResult(
+                value=value,
+                provider=result.provider,
+                model=result.model,
+                tokens_in=result.tokens_in,
+                tokens_out=result.tokens_out,
+            )
+        return None
 
     def complete_json[T: BaseModel](
         self, *, system: str, user: str, schema: type[T]
@@ -167,43 +233,36 @@ class LLMRouter:
             log.warning("prompt_com_dado_pessoal_bloqueado_para_nuvem")
 
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        estimate = self._estimate(messages)
         errors: list[str] = []
+        throttled: list[tuple[float, Provider]] = []
         for provider in self.providers:
             if not provider.local and not cloud_allowed:
                 errors.append(f"{provider.name}: bloqueado (texto com dado pessoal)")
                 continue
-            breaker = self._breakers.setdefault(provider.name, CircuitBreaker())
-            if not breaker.allow():
-                errors.append(f"{provider.name}: pausado após falhas seguidas")
+            if not self._breaker(provider).allow():
+                errors.append(f"{provider.name}: pausado após falhas ou a pedido do provedor")
                 continue
-            for attempt in range(self.max_retries + 1):
-                try:
-                    value, result = self._call(provider, messages, schema)
-                except ProviderError as exc:
-                    if exc.retryable and attempt < self.max_retries:
-                        self._sleep(self.backoff * (2**attempt))
-                        continue
-                    errors.append(f"{provider.name}: {exc}")
-                    breaker.record_failure()
-                    log.warning("llm_provedor_falhou", provedor=provider.name, erro=str(exc))
-                    break
-                breaker.record_success()
-                if self.cache is not None:
-                    self.cache.set(
-                        key,
-                        {
-                            "value": value.model_dump(mode="json"),
-                            "provider": result.provider,
-                            "model": result.model,
-                        },
-                    )
-                return StructuredResult(
-                    value=value,
-                    provider=result.provider,
-                    model=result.model,
-                    tokens_in=result.tokens_in,
-                    tokens_out=result.tokens_out,
+            wait = provider.limiter.wait_time(estimate)
+            if wait > self.max_wait:
+                # Limite do próprio Radar, não falha do provedor: não conta no circuit breaker.
+                throttled.append((wait, provider))
+                errors.append(f"{provider.name}: limite de taxa (espera de {wait:.0f} s)")
+                continue
+            outcome = self._attempt(provider, messages, schema, key, errors)
+            if outcome is not None:
+                return outcome
+
+        if throttled:
+            wait, provider = min(throttled, key=lambda item: item[0])
+            if wait <= self.throttle_wait:
+                log.info(
+                    "llm_aguardando_limite_de_taxa", provedor=provider.name, segundos=round(wait)
                 )
+                self._sleep(wait)
+                outcome = self._attempt(provider, messages, schema, key, errors)
+                if outcome is not None:
+                    return outcome
         raise LLMUnavailable(
             "Nenhum provedor de LLM respondeu: " + "; ".join(errors or ["nenhum configurado"])
         )

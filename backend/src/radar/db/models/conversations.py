@@ -137,6 +137,8 @@ class Message(IdMixin, TenantScoped, Base):
     )
     transcription_model: Mapped[str] = mapped_column(String(80), nullable=False, default="")
     edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    #: Quando o autor apagou a mensagem "para todos" no WhatsApp. O Radar guarda o original.
+    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow, nullable=False)
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")

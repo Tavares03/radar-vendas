@@ -7,6 +7,7 @@ import {
   MessagesSquare,
   Settings,
   ShieldAlert,
+  Smartphone,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +27,7 @@ const NAV: Item[] = [
   { href: "/", label: "Visão geral", icon: Gauge, show: (me) => can(me, "analisar") },
   { href: "/alertas", label: "Alertas", icon: ShieldAlert, show: () => true },
   { href: "/conversas", label: "Conversas", icon: MessagesSquare, show: () => true },
+  { href: "/whatsapp", label: "WhatsApp", icon: Smartphone, show: (me) => can(me, "importar") },
   { href: "/vendedores", label: "Vendedores", icon: Users, show: (me) => can(me, "analisar") },
   { href: "/playbooks", label: "Playbooks", icon: BookOpenCheck, show: () => true },
   {

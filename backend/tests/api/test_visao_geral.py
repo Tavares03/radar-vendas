@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import io
 import zipfile
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,7 +18,9 @@ from radar.auth.passwords import verify_password
 from radar.cli import app as cli
 from radar.config import get_settings
 from radar.db.models import Analysis, Conversation, Seller, Tenant, User
-from radar.services.demo import seed_demo_on_first_boot, shift_days, shift_export
+from radar.services import demo
+from radar.services.accounts import AccountError, create_user, set_password
+from radar.services.demo import seed_demo, seed_demo_on_first_boot, shift_days, shift_export
 from radar.taxonomy import Role
 from radar.testing import AccountFactory
 
@@ -207,6 +211,38 @@ def test_demonstracao_na_primeira_subida(db: Session, monkeypatch: pytest.Monkey
     assert analyzed >= 40
     # Com gente no banco, a segunda subida não cria nada.
     assert seed_demo_on_first_boot(settings) is None
+
+
+def test_demonstracao_aceita_senha_curta_e_as_demais_contas_nao(
+    client: TestClient,
+    db: Session,
+    make_tenant: Callable[..., Tenant],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+):
+    # Pasta de amostras vazia: cria só a empresa e as contas, sem processar conversas.
+    monkeypatch.setattr(demo, "samples_dir", lambda _settings: tmp_path)
+
+    assert seed_demo(get_settings(), password="123456").created
+    for email, _name, _role in demo.DEMO_USERS:
+        login = client.post("/api/v1/auth/login", json={"email": email, "password": "123456"})
+        assert login.status_code == 200, login.text
+        client.cookies.clear()
+
+    tenant = make_tenant()
+    with pytest.raises(AccountError, match="10 caracteres"):
+        create_user(
+            db,
+            tenant_id=tenant.id,
+            email="pessoa@example.com",
+            name="Pessoa",
+            role=Role.ADMIN,
+            password="123456",
+        )
+    admin = db.scalar(select(User).where(User.email == "admin@demo.radar"))
+    assert admin is not None
+    with pytest.raises(AccountError, match="10 caracteres"):
+        set_password(admin, "654321")  # trocar pelo painel segue a regra normal
 
 
 def test_primeira_subida_com_administrador_proprio_nao_carrega_a_demo(

@@ -185,10 +185,29 @@ class ImportStatus(StrEnum):
 
 
 class ConversationStatus(StrEnum):
+    #: Conversa do WhatsApp conectado ainda recebendo mensagens: a análise roda depois de uma
+    #: pausa (``RADAR_WHATSAPP_IDLE_MINUTES``), para não gastar cota a cada mensagem.
+    AGUARDANDO = "aguardando"
     PENDENTE = "pendente"
     PROCESSANDO = "processando"
     ANALISADA = "analisada"
     ERRO = "erro"
+
+
+class RemovalStatus(StrEnum):
+    """Pedido do vendedor para tirar uma conversa do Radar: só a gestão decide."""
+
+    PENDENTE = "pendente"
+    APROVADO = "aprovado"
+    RECUSADO = "recusado"
+
+
+class WhatsAppState(StrEnum):
+    """Estado da conexão de um número de WhatsApp (Evolution API)."""
+
+    DESCONECTADO = "desconectado"
+    AGUARDANDO_QR = "aguardando_qr"
+    CONECTADO = "conectado"
 
 
 class TranscriptionStatus(StrEnum):

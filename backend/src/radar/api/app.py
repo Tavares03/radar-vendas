@@ -25,9 +25,11 @@ from radar.api.routers import (
     insights,
     playbooks,
     privacy,
+    removals,
     sellers,
     tenant,
     users,
+    whatsapp,
 )
 from radar.config import DEV_SECRET_KEY, get_settings
 from radar.logs import configure_logging, get_logger
@@ -65,6 +67,10 @@ TAGS = [
     {"name": "alertas", "description": "Fila de alertas: riscos e oportunidades com evidência."},
     {"name": "playbooks", "description": "Regras por setor em YAML, padrão ou da empresa."},
     {"name": "integrações", "description": "Tokens de API, webhooks e canais de alerta."},
+    {
+        "name": "whatsapp",
+        "description": "WhatsApp conectado por QR code (Evolution API): estado e conexão.",
+    },
     {"name": "auditoria", "description": "Trilha de auditoria."},
 ]
 
@@ -139,9 +145,12 @@ def create_app() -> FastAPI:
         insights,
         playbooks,
         privacy,
+        removals,
+        whatsapp,
         api_tokens,
         audit,
     ):
         v1.include_router(module.router)
+    v1.include_router(whatsapp.webhook_router)
     app.include_router(v1)
     return app

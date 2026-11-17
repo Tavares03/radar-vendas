@@ -53,7 +53,7 @@ Valem para todas as fases e tarefas:
         parser de export · identificação vendedor/cliente · dedupe
                          │
                          ▼
-               Fila de jobs (Valkey + RQ)          modo "inline" p/ dev e testes
+               Fila de jobs (tabela no PostgreSQL)  modo "inline" p/ dev e testes
                          │
                          ▼
    ┌─────────────────────── Worker ───────────────────────────────┐
@@ -167,7 +167,7 @@ O registro completo, com alternativas e motivos, fica em [DECISOES.md](DECISOES.
 
 | Tema | Decisão | Motivo curto |
 |---|---|---|
-| Fila | **RQ** sobre **Valkey** | o mais simples que aguenta; Valkey é o fork BSD do Redis |
+| Fila | tabela no **PostgreSQL** com `SKIP LOCKED` (RQ sobre Valkey continua como opção) | um banco só para operar (D52) |
 | Acesso ao banco | SQLAlchemy 2 **síncrono** + psycopg 3 | o worker é CPU-bound e síncrono; menos complexidade |
 | Testes de banco | SQLite por padrão, PostgreSQL na CI | `pytest` roda sem serviços; a CI valida o dialeto real e as migrations |
 | Multi-tenant | coluna `tenant_id` + escopo obrigatório nas consultas | simples e testável; RLS fica no roadmap |
@@ -272,7 +272,8 @@ Cada fase lista entregas, interfaces que as fases seguintes consomem e como é v
 
 ### Fase 9 — Integrações
 - Webhooks de saída assinados com retentativa; canais de alerta (e-mail, Telegram, webhook);
-  workflows N8N; exportação CSV; webhooks de entrada (Cloud API e Evolution API, modo espelho);
+  workflows N8N; exportação CSV; webhooks de entrada (Cloud API e Evolution API, modo espelho —
+  a Evolution já está pronta, ver D54);
   `docs/API.md` e OpenAPI versionado.
 
 ### Fase 10 — Coach e insights

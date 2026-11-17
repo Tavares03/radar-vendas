@@ -135,6 +135,15 @@ def _normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()[:2000]
 
 
+def _dedupe_digest(base: str, occurrence: int) -> str:
+    return hashlib.sha256(f"{base}#{occurrence}".encode()).hexdigest()
+
+
+def external_message_hash(external_id: str) -> str:
+    """``dedupe_hash`` de uma mensagem que veio com id da origem (WhatsApp, API)."""
+    return _dedupe_digest(f"ext|{external_id}", 0)
+
+
 def _dedupe_hashes(
     messages: Sequence[IncomingMessage], author_keys: Mapping[str, str]
 ) -> list[str]:
@@ -157,7 +166,7 @@ def _dedupe_hashes(
         # Duas mensagens idênticas no mesmo instante ("ok", "ok") são distintas pela ordem.
         occurrence = seen.get(base, 0)
         seen[base] = occurrence + 1
-        hashes.append(hashlib.sha256(f"{base}#{occurrence}".encode()).hexdigest())
+        hashes.append(_dedupe_digest(base, occurrence))
     return hashes
 
 

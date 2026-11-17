@@ -878,6 +878,16 @@
             "title": "Participants",
             "type": "array"
           },
+          "pending_removal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RemovalRequestOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "playbook": {
             "title": "Playbook",
             "type": "string"
@@ -1259,6 +1269,7 @@
       },
       "ConversationStatus": {
         "enum": [
+          "aguardando",
           "pendente",
           "processando",
           "analisada",
@@ -1719,6 +1730,11 @@
           },
           "revealed": {
             "title": "Revealed",
+            "type": "boolean"
+          },
+          "revoked": {
+            "default": false,
+            "title": "Revoked",
             "type": "boolean"
           },
           "sender_key": {
@@ -2274,6 +2290,135 @@
         ],
         "title": "PlaybookTestOut",
         "type": "object"
+      },
+      "RemovalDecisionIn": {
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          },
+          "stop_capturing": {
+            "default": true,
+            "title": "Stop Capturing",
+            "type": "boolean"
+          }
+        },
+        "title": "RemovalDecisionIn",
+        "type": "object"
+      },
+      "RemovalRequestIn": {
+        "properties": {
+          "reason": {
+            "description": "Por que a conversa deveria sair do Radar (ex.: é uma conversa pessoal).",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RemovalRequestIn",
+        "type": "object"
+      },
+      "RemovalRequestOut": {
+        "properties": {
+          "conversation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "conversation_label": {
+            "title": "Conversation Label",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by": {
+            "title": "Decided By",
+            "type": "string"
+          },
+          "decision_note": {
+            "title": "Decision Note",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "requested_by": {
+            "title": "Requested By",
+            "type": "string"
+          },
+          "seller": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SellerBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/RemovalStatus"
+          }
+        },
+        "required": [
+          "id",
+          "conversation_id",
+          "conversation_label",
+          "seller",
+          "requested_by",
+          "reason",
+          "status",
+          "decided_by",
+          "decided_at",
+          "decision_note",
+          "created_at"
+        ],
+        "title": "RemovalRequestOut",
+        "type": "object"
+      },
+      "RemovalStatus": {
+        "description": "Pedido do vendedor para tirar uma conversa do Radar: só a gestão decide.",
+        "enum": [
+          "pendente",
+          "aprovado",
+          "recusado"
+        ],
+        "title": "RemovalStatus",
+        "type": "string"
       },
       "RetentionPolicyOut": {
         "properties": {
@@ -3322,6 +3467,171 @@
           "critical_alerts"
         ],
         "title": "WeekOut",
+        "type": "object"
+      },
+      "WhatsAppConnectionOut": {
+        "properties": {
+          "connected_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connected At"
+          },
+          "disconnected_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disconnected At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_event_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event At"
+          },
+          "phone_tail": {
+            "title": "Phone Tail",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/WhatsAppState"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "phone_tail",
+          "connected_at",
+          "disconnected_at",
+          "last_event_at"
+        ],
+        "title": "WhatsAppConnectionOut",
+        "type": "object"
+      },
+      "WhatsAppQrOut": {
+        "properties": {
+          "pairing_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pairing Code"
+          },
+          "qr_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qr Image"
+          },
+          "state": {
+            "$ref": "#/components/schemas/WhatsAppState"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "WhatsAppQrOut",
+        "type": "object"
+      },
+      "WhatsAppSellerOut": {
+        "properties": {
+          "connection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WhatsAppConnectionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seller": {
+            "$ref": "#/components/schemas/SellerBrief"
+          }
+        },
+        "required": [
+          "seller",
+          "connection"
+        ],
+        "title": "WhatsAppSellerOut",
+        "type": "object"
+      },
+      "WhatsAppState": {
+        "description": "Estado da conexão de um número de WhatsApp (Evolution API).",
+        "enum": [
+          "desconectado",
+          "aguardando_qr",
+          "conectado"
+        ],
+        "title": "WhatsAppState",
+        "type": "string"
+      },
+      "WhatsAppStatusOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "can_manage": {
+            "title": "Can Manage",
+            "type": "boolean"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "idle_minutes": {
+            "title": "Idle Minutes",
+            "type": "integer"
+          },
+          "sellers": {
+            "items": {
+              "$ref": "#/components/schemas/WhatsAppSellerOut"
+            },
+            "title": "Sellers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enabled",
+          "available",
+          "can_manage",
+          "idle_minutes",
+          "sellers"
+        ],
+        "title": "WhatsAppStatusOut",
         "type": "object"
       }
     }
@@ -4551,6 +4861,60 @@
         ]
       }
     },
+    "/api/v1/conversations/{conversation_id}/removal-request": {
+      "post": {
+        "description": "O vendedor pede para tirar uma conversa do Radar (ex.: é pessoal). A conversa continua\nvisível e analisada até a gestão decidir.",
+        "operationId": "create_request_api_v1_conversations__conversation_id__removal_request_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovalRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pedir a remoção de uma conversa",
+        "tags": [
+          "conversas"
+        ]
+      }
+    },
     "/api/v1/conversations/{conversation_id}/reprocess": {
       "post": {
         "operationId": "reprocess_api_v1_conversations__conversation_id__reprocess_post",
@@ -5174,6 +5538,180 @@
         ]
       }
     },
+    "/api/v1/removal-requests": {
+      "get": {
+        "description": "A gestão vê todos; quem não pode decidir vê só os pedidos que fez.",
+        "operationId": "list_requests_api_v1_removal_requests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RemovalStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "pendente",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RemovalRequestOut"
+                  },
+                  "title": "Response List Requests Api V1 Removal Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Listar pedidos de remoção",
+        "tags": [
+          "conversas"
+        ]
+      }
+    },
+    "/api/v1/removal-requests/{request_id}/approve": {
+      "post": {
+        "description": "Apaga a conversa, as mensagens, os áudios e as análises. Para conversas do WhatsApp\nconectado, com `stop_capturing` o contato também deixa de ser capturado.",
+        "operationId": "approve_api_v1_removal_requests__request_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovalDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Aprovar um pedido de remoção (apaga a conversa)",
+        "tags": [
+          "conversas"
+        ]
+      }
+    },
+    "/api/v1/removal-requests/{request_id}/reject": {
+      "post": {
+        "operationId": "reject_api_v1_removal_requests__request_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovalDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recusar um pedido de remoção (a conversa fica)",
+        "tags": [
+          "conversas"
+        ]
+      }
+    },
     "/api/v1/sellers": {
       "get": {
         "operationId": "list_sellers_api_v1_sellers_get",
@@ -5614,6 +6152,109 @@
           "usuários"
         ]
       }
+    },
+    "/api/v1/whatsapp": {
+      "get": {
+        "description": "A gestão vê todos os vendedores; o vendedor vê só o próprio número.",
+        "operationId": "status_api_v1_whatsapp_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsAppStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Estado do WhatsApp da equipe",
+        "tags": [
+          "whatsapp"
+        ]
+      }
+    },
+    "/api/v1/whatsapp/sellers/{seller_id}/connect": {
+      "post": {
+        "description": "Devolve o QR code para ler em *WhatsApp → Aparelhos conectados*. Chamar de novo traz um\nQR novo (eles expiram em segundos).",
+        "operationId": "connect_api_v1_whatsapp_sellers__seller_id__connect_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seller_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Seller Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsAppQrOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Conectar o WhatsApp de um vendedor (QR code)",
+        "tags": [
+          "whatsapp"
+        ]
+      }
+    },
+    "/api/v1/whatsapp/sellers/{seller_id}/connection": {
+      "delete": {
+        "description": "Só a gestão desconecta pelo painel. As conversas já recebidas ficam no Radar.",
+        "operationId": "disconnect_api_v1_whatsapp_sellers__seller_id__connection_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seller_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Seller Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Desconectar o WhatsApp de um vendedor",
+        "tags": [
+          "whatsapp"
+        ]
+      }
     }
   },
   "tags": [
@@ -5664,6 +6305,10 @@
     {
       "description": "Tokens de API, webhooks e canais de alerta.",
       "name": "integrações"
+    },
+    {
+      "description": "WhatsApp conectado por QR code (Evolution API): estado e conexão.",
+      "name": "whatsapp"
     },
     {
       "description": "Trilha de auditoria.",

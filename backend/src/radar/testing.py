@@ -3,16 +3,46 @@
 from __future__ import annotations
 
 import io
+import os
+import signal
+import time
 import zipfile
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from radar.db.models import Tenant, User
 from radar.transcription.base import Transcript, TranscriptionError
 
 #: Senha usada pelas contas criadas nos testes.
 PASSWORD = "senha-forte-123"  # noqa: S105
+
+# ------------------------------------------------------------------ jobs de teste da fila
+# Ficam aqui (e não no arquivo de teste) porque o worker importa o job pelo caminho do módulo.
+
+#: Chamadas recebidas por :func:`record_job`, na ordem.
+JOB_CALLS: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+
+
+def record_job(*args: Any, **kwargs: Any) -> None:
+    """Só registra os argumentos em :data:`JOB_CALLS`."""
+    JOB_CALLS.append((args, kwargs))
+
+
+def failing_job(*_args: Any, **_kwargs: Any) -> None:
+    raise RuntimeError("falha simulada no job")
+
+
+def slow_job(seconds: float) -> None:
+    time.sleep(seconds)
+
+
+def sigterm_job() -> None:
+    """Simula um ``docker compose stop`` no meio do job: o próprio processo recebe SIGTERM."""
+    os.kill(os.getpid(), signal.SIGTERM)
+    time.sleep(5)
+    JOB_CALLS.append((("terminou",), {}))
 
 
 @dataclass

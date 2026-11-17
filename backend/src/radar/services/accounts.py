@@ -22,12 +22,20 @@ from radar.db.models import Seller, Tenant, User
 from radar.logs import get_logger
 from radar.taxonomy import Role
 from radar.tenant_settings import TenantSettings
+from radar.textutil import plural
 
 log = get_logger(__name__)
 
 
 class AccountError(ValueError):
     """Regra de negócio violada ao criar ou alterar contas."""
+
+
+def _check_password(password: str, min_length: int) -> None:
+    if len(password) < max(1, min_length):
+        raise AccountError(
+            f"A senha precisa ter pelo menos {plural(max(1, min_length), 'caractere', 'caracteres')}."
+        )
 
 
 def slugify(value: str) -> str:
@@ -76,10 +84,11 @@ def create_user(
     role: Role,
     password: str,
     seller_id: uuid.UUID | None = None,
+    min_length: int = MIN_PASSWORD_LENGTH,
 ) -> User:
+    """Cria um usuário. ``min_length`` só é relaxado para as contas da demonstração."""
     email = normalize_email(email)
-    if len(password) < MIN_PASSWORD_LENGTH:
-        raise AccountError(f"A senha precisa ter pelo menos {MIN_PASSWORD_LENGTH} caracteres.")
+    _check_password(password, min_length)
     exists = db.execute(
         select(User.id).where(User.email == email).execution_options(skip_tenant_filter=True)
     ).first()
@@ -120,9 +129,8 @@ def authenticate(db: Session, email: str, password: str) -> User | None:
     return user
 
 
-def set_password(user: User, new_password: str) -> None:
-    if len(new_password) < MIN_PASSWORD_LENGTH:
-        raise AccountError(f"A senha precisa ter pelo menos {MIN_PASSWORD_LENGTH} caracteres.")
+def set_password(user: User, new_password: str, *, min_length: int = MIN_PASSWORD_LENGTH) -> None:
+    _check_password(new_password, min_length)
     user.password_hash = hash_password(new_password)
     # Derruba todas as sessões emitidas até aqui.
     user.session_version = (user.session_version or 0) + 1

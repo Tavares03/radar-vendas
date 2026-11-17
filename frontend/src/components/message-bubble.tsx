@@ -62,6 +62,11 @@ export function MessageBubble({
         ) : null}
         <p className="whitespace-pre-wrap break-words">{body}</p>
         <p className="numeros -mt-0.5 text-right text-[0.68rem] text-grafite">
+          {message.revoked ? (
+            <span className="font-semibold text-critico" title="O Radar guardou o texto original">
+              apagada no WhatsApp,{" "}
+            </span>
+          ) : null}
           {message.edited ? "editada, " : ""}
           {formatTime(message.sent_at)}
         </p>

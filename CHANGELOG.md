@@ -104,13 +104,49 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   WhatsApp, nota num arco, alertas mais graves primeiro e envio de arquivos arrastando para a
   página. Ícone próprio no navegador.
 - Contador de alertas críticos em aberto na navegação.
+- WhatsApp ao vivo (perfil `whatsapp` do Compose): cada vendedor conecta o próprio número por QR
+  code, como no WhatsApp Web, via Evolution API 2.3.7 guardada no mesmo PostgreSQL. As mensagens
+  chegam por webhook (grupos, status e canais ficam de fora), são transcritas e mascaradas em
+  segundos, e a análise com LLM roda depois de uma pausa na conversa. Só lê: não envia nem marca
+  como lido; não importa o histórico antigo. Página **WhatsApp** no painel com a recomendação de
+  usar WhatsApp Business com número de trabalho; a gestão vê a equipe toda e quem saiu do ar.
+- Remoção de conversa com aprovação: o vendedor pede (com motivo) e só a gestão aprova ou recusa;
+  aprovar apaga a conversa e, se ela veio do WhatsApp conectado, para de capturar o contato.
+  Mensagem apagada "para todos" no WhatsApp fica no Radar marcada como apagada (com aviso na
+  conversa), e a edição guarda o texto original.
 
 ### Mudado
+- O vendedor não troca mais o playbook da própria conversa (trocar por um mais brando fazia
+  alertas sumirem); só a gestão.
+- Docker Compose só com PostgreSQL: a fila de jobs passa a ser uma tabela do próprio banco
+  (`RADAR_QUEUE_MODE=postgres`, com deduplicação, atraso, retentativas, timeout e recuperação de
+  jobs de worker morto) e o Valkey sai do Compose. Usuário e senha do banco passam a ser
+  `postgres`/`postgres`; na primeira subida são criados também os bancos `radar_test` e `n8n`, e
+  o N8N opcional guarda os dados no PostgreSQL. O modo `rq` continua disponível.
 - A tendência semanal da visão geral cobre sempre as oito semanas, qualquer que seja o período.
 - Textos do painel sem "(s)": "1 objeção", "Atendeu 0 de 1 pedido", e a demora na resposta em
   horas e minutos ("9 h 21 min de horário comercial") em vez de minutos crus.
 
 ### Corrigido
+- `RADAR_DEMO_PASSWORD` com menos de 10 caracteres (ex.: `123456`) fazia a demonstração não ser
+  criada, só com um aviso no log. As contas da demonstração agora aceitam qualquer tamanho; as
+  demais mantêm o mínimo de 10.
+- LLM num lote de importação: 35 de 45 conversas da demonstração ficavam sem análise de LLM. O
+  limite de taxa do próprio Radar contava como falha e pausava a Groq e o Gemini pelo circuit
+  breaker; agora não conta, e com todos os provedores no limite o worker espera o primeiro que
+  liberar (até 65 s, `RADAR_LLM_THROTTLE_WAIT_SECONDS`). Um 429 com `Retry-After` longo pausa só
+  aquele provedor pelo prazo pedido; um curto é respeitado antes de tentar de novo.
+- Groq com `openai/gpt-oss-120b`: o raciocínio padrão gastava ~1500 dos 1800 tokens de resposta e
+  o JSON saía cortado (HTTP 400 `json_validate_failed`). Agora vai `reasoning_effort=low`
+  (`RADAR_GROQ_REASONING_EFFORT`) e o teto de resposta é 2400 tokens (`RADAR_LLM_MAX_OUTPUT_TOKENS`).
+- Resposta cortada no limite de tokens (`finish_reason=length`) era "consertada" e aceita como se
+  estivesse completa, sem objeções e pedidos; agora é recusada e o próximo provedor é usado.
+- Erros HTTP dos provedores agora trazem o motivo (`HTTP 400 (json_validate_failed)`,
+  `HTTP 401 (invalid_api_key)`) no log e na análise, em vez de só o código.
+- `RADAR_OLLAMA_BASE_URL` com `/v1` (como o `.env.example` indicava) virava `/v1/v1`.
+- Chaves de API com espaço ou `\r` (arquivo salvo no Windows) viravam um cabeçalho inválido.
+- Os testes com LLM real (`RADAR_RUN_NETWORK_TESTS=1`) eram pulados quando a chave vinha só do
+  ambiente, como o próprio teste ensina: o `conftest.py` apagava as chaves.
 - Testes em SQLite rodavam com as chaves estrangeiras desligadas (`ON DELETE CASCADE` ignorado).
 - Detector de dados pessoais: complemento "ap 41" no endereço, CNPJ alfanumérico sem formatação
   com contexto e chave PIX citada mais longe da palavra "pix".

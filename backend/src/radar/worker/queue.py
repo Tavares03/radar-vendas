@@ -1,7 +1,9 @@
-"""Fila de jobs com três modos (``RADAR_QUEUE_MODE``).
+"""Fila de jobs com quatro modos (``RADAR_QUEUE_MODE``).
 
-- ``rq``: produção. Jobs vão para o Valkey/Redis e rodam no processo ``radar worker``.
-- ``inline``: modo leve, sem Valkey. Jobs rodam numa thread do próprio processo da API.
+- ``postgres``: padrão do Compose. Jobs vão para a tabela ``job_queue`` do próprio banco e rodam
+  no processo ``radar worker`` (ver :mod:`radar.worker.pg_queue`). Só depende do PostgreSQL.
+- ``rq``: jobs vão para o Valkey/Redis e rodam no processo ``radar worker``.
+- ``inline``: modo leve, sem worker. Jobs rodam numa thread do próprio processo da API.
 - ``sync``: testes. O job roda na hora, na mesma thread, e os erros sobem para quem chamou.
 """
 
@@ -81,7 +83,7 @@ def enqueue(
     max_retries: int = 0,
     **kwargs: Any,
 ) -> str | None:
-    """Agenda ``func(*args, **kwargs)``. Devolve o id do job no modo ``rq``.
+    """Agenda ``func(*args, **kwargs)``. Devolve o id do job nos modos ``postgres`` e ``rq``.
 
     Com ``job_id``, um job igual que ainda esteja na fila não é duplicado.
     """
@@ -90,6 +92,19 @@ def enqueue(
     if mode == "sync":
         func(*args, **kwargs)
         return None
+
+    if mode == "postgres":
+        from radar.worker import pg_queue
+
+        return pg_queue.enqueue(
+            func,
+            args,
+            kwargs,
+            job_id=job_id,
+            delay=delay,
+            job_timeout=job_timeout,
+            max_retries=max_retries,
+        )
 
     if mode == "inline":
         if delay is not None and delay.total_seconds() > 0:

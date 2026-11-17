@@ -28,9 +28,12 @@ os.environ["RADAR_CLASSIFIER_MODEL"] = "off"
 os.environ["RADAR_EMBEDDING_MODEL"] = "off"
 os.environ["RADAR_TRANSCRIPTION_ENABLED"] = "false"
 os.environ["RADAR_LOG_LEVEL"] = "WARNING"
-for _key in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
-    os.environ.pop(_key, None)
-    os.environ.pop(f"RADAR_{_key}", None)
+# Chaves reais nunca vazam para a suíte comum. Com RADAR_RUN_NETWORK_TESTS=1 elas ficam, para os
+# testes marcados com ``network`` (os demais usam RADAR_LLM_MODE=off e não as leem).
+if os.environ.get("RADAR_RUN_NETWORK_TESTS") != "1":
+    for _key in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
+        os.environ.pop(_key, None)
+        os.environ.pop(f"RADAR_{_key}", None)
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

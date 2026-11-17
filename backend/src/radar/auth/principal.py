@@ -26,6 +26,8 @@ class Permission(StrEnum):
     AUDIT_READ = "audit:read"
     PRIVACY_MANAGE = "privacy:manage"
     REPORTS_EXPORT = "reports:export"
+    #: Ver e desconectar o WhatsApp de toda a equipe (o vendedor só conecta o próprio).
+    WHATSAPP_MANAGE = "whatsapp:manage"
 
 
 P = Permission
@@ -46,6 +48,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
             P.PLAYBOOKS_WRITE,
             P.SELLERS_MANAGE,
             P.REPORTS_EXPORT,
+            P.WHATSAPP_MANAGE,
         }
     ),
     # O vendedor enxerga só as próprias conversas e alertas (ver Principal.only_seller_id).

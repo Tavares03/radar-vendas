@@ -2,11 +2,12 @@
 
 import { ChevronLeft, Eye, EyeOff, Lightbulb, RefreshCw, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 import { AlertReview } from "@/components/alert-review";
 import { MessageBubble } from "@/components/message-bubble";
+import { RemovalRequestBox } from "@/components/removal-request";
 import { ScorePanel } from "@/components/score-panel";
 import { Button, ErrorNote, Initials, Loading, Panel, SeverityTag, StatusTag } from "@/components/ui";
 import { api, type Schemas, unwrap } from "@/lib/api/client";
@@ -57,6 +58,7 @@ function useHashMessage(): string | null {
 
 export function ConversationView() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: me } = useMe();
   const [reveal, setReveal] = useState(false);
   const [clicked, setClicked] = useState<string | null>(null);
@@ -179,6 +181,15 @@ export function ConversationView() {
             </span>
           </p>
         ) : null}
+        <RemovalRequestBox
+          conversationId={data.id}
+          live={data.source === "evolution"}
+          pending={data.pending_removal}
+          canRequest={can(me, "importar")}
+          canDecide={can(me, "excluir")}
+          onChanged={() => void conversation.mutate()}
+          onRemoved={() => router.push("/conversas")}
+        />
         {data.warnings.length ? (
           <ul className="mt-3 space-y-1 rounded-lg border border-atencao-forte/40 bg-atencao-marca/40 px-3 py-2 text-sm">
             {data.warnings.map((warning) => (

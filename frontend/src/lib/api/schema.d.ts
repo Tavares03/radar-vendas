@@ -341,6 +341,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/conversations/{conversation_id}/removal-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pedir a remoção de uma conversa
+         * @description O vendedor pede para tirar uma conversa do Radar (ex.: é pessoal). A conversa continua
+         *     visível e analisada até a gestão decidir.
+         */
+        post: operations["create_request_api_v1_conversations__conversation_id__removal_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/conversations/{conversation_id}/reprocess": {
         parameters: {
             query?: never;
@@ -581,6 +602,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/removal-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar pedidos de remoção
+         * @description A gestão vê todos; quem não pode decidir vê só os pedidos que fez.
+         */
+        get: operations["list_requests_api_v1_removal_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/removal-requests/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprovar um pedido de remoção (apaga a conversa)
+         * @description Apaga a conversa, as mensagens, os áudios e as análises. Para conversas do WhatsApp
+         *     conectado, com `stop_capturing` o contato também deixa de ser capturado.
+         */
+        post: operations["approve_api_v1_removal_requests__request_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/removal-requests/{request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recusar um pedido de remoção (a conversa fica) */
+        post: operations["reject_api_v1_removal_requests__request_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sellers": {
         parameters: {
             query?: never;
@@ -689,6 +768,67 @@ export interface paths {
         head?: never;
         /** Alterar usuário */
         patch: operations["update_api_v1_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado do WhatsApp da equipe
+         * @description A gestão vê todos os vendedores; o vendedor vê só o próprio número.
+         */
+        get: operations["status_api_v1_whatsapp_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/whatsapp/sellers/{seller_id}/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Conectar o WhatsApp de um vendedor (QR code)
+         * @description Devolve o QR code para ler em *WhatsApp → Aparelhos conectados*. Chamar de novo traz um
+         *     QR novo (eles expiram em segundos).
+         */
+        post: operations["connect_api_v1_whatsapp_sellers__seller_id__connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/whatsapp/sellers/{seller_id}/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Desconectar o WhatsApp de um vendedor
+         * @description Só a gestão desconecta pelo painel. As conversas já recebidas ficam no Radar.
+         */
+        delete: operations["disconnect_api_v1_whatsapp_sellers__seller_id__connection_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -1032,6 +1172,7 @@ export interface components {
             open_alerts?: number;
             /** Participants */
             participants: components["schemas"]["ParticipantOut"][];
+            pending_removal?: components["schemas"]["RemovalRequestOut"] | null;
             /** Playbook */
             playbook: string;
             /**
@@ -1142,7 +1283,7 @@ export interface components {
          * ConversationStatus
          * @enum {string}
          */
-        ConversationStatus: "pendente" | "processando" | "analisada" | "erro";
+        ConversationStatus: "aguardando" | "pendente" | "processando" | "analisada" | "erro";
         /** ConversationUpdate */
         ConversationUpdate: {
             /** Playbook */
@@ -1338,6 +1479,11 @@ export interface components {
             position: number;
             /** Revealed */
             revealed: boolean;
+            /**
+             * Revoked
+             * @default false
+             */
+            revoked?: boolean;
             /** Sender Key */
             sender_key: string;
             /** Sender Label */
@@ -1550,6 +1696,62 @@ export interface components {
             /** Hits */
             hits: components["schemas"]["RuleHitOut"][];
         };
+        /** RemovalDecisionIn */
+        RemovalDecisionIn: {
+            /**
+             * Note
+             * @default
+             */
+            note?: string;
+            /**
+             * Stop Capturing
+             * @default true
+             */
+            stop_capturing?: boolean;
+        };
+        /** RemovalRequestIn */
+        RemovalRequestIn: {
+            /**
+             * Reason
+             * @description Por que a conversa deveria sair do Radar (ex.: é uma conversa pessoal).
+             */
+            reason: string;
+        };
+        /** RemovalRequestOut */
+        RemovalRequestOut: {
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Conversation Label */
+            conversation_label: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By */
+            decided_by: string;
+            /** Decision Note */
+            decision_note: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reason */
+            reason: string;
+            /** Requested By */
+            requested_by: string;
+            seller: components["schemas"]["SellerBrief"] | null;
+            status: components["schemas"]["RemovalStatus"];
+        };
+        /**
+         * RemovalStatus
+         * @description Pedido do vendedor para tirar uma conversa do Radar: só a gestão decide.
+         * @enum {string}
+         */
+        RemovalStatus: "pendente" | "aprovado" | "recusado";
         /** RetentionPolicyOut */
         RetentionPolicyOut: {
             /** Retention Conversation Days */
@@ -1948,6 +2150,55 @@ export interface components {
              * Format: date
              */
             week_start: string;
+        };
+        /** WhatsAppConnectionOut */
+        WhatsAppConnectionOut: {
+            /** Connected At */
+            connected_at: string | null;
+            /** Disconnected At */
+            disconnected_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Event At */
+            last_event_at: string | null;
+            /** Phone Tail */
+            phone_tail: string;
+            state: components["schemas"]["WhatsAppState"];
+        };
+        /** WhatsAppQrOut */
+        WhatsAppQrOut: {
+            /** Pairing Code */
+            pairing_code?: string | null;
+            /** Qr Image */
+            qr_image?: string | null;
+            state: components["schemas"]["WhatsAppState"];
+        };
+        /** WhatsAppSellerOut */
+        WhatsAppSellerOut: {
+            connection: components["schemas"]["WhatsAppConnectionOut"] | null;
+            seller: components["schemas"]["SellerBrief"];
+        };
+        /**
+         * WhatsAppState
+         * @description Estado da conexão de um número de WhatsApp (Evolution API).
+         * @enum {string}
+         */
+        WhatsAppState: "desconectado" | "aguardando_qr" | "conectado";
+        /** WhatsAppStatusOut */
+        WhatsAppStatusOut: {
+            /** Available */
+            available: boolean;
+            /** Can Manage */
+            can_manage: boolean;
+            /** Enabled */
+            enabled: boolean;
+            /** Idle Minutes */
+            idle_minutes: number;
+            /** Sellers */
+            sellers: components["schemas"]["WhatsAppSellerOut"][];
         };
     };
     responses: never;
@@ -2631,6 +2882,41 @@ export interface operations {
             };
         };
     };
+    create_request_api_v1_conversations__conversation_id__removal_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemovalRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovalRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     reprocess_api_v1_conversations__conversation_id__reprocess_post: {
         parameters: {
             query?: never;
@@ -3082,6 +3368,108 @@ export interface operations {
             };
         };
     };
+    list_requests_api_v1_removal_requests_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["RemovalStatus"] | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovalRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_api_v1_removal_requests__request_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemovalDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovalRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_api_v1_removal_requests__request_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemovalDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovalRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_sellers_api_v1_sellers_get: {
         parameters: {
             query?: never;
@@ -3402,6 +3790,86 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UserOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_v1_whatsapp_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppStatusOut"];
+                };
+            };
+        };
+    };
+    connect_api_v1_whatsapp_sellers__seller_id__connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seller_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppQrOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_v1_whatsapp_sellers__seller_id__connection_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seller_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -14,6 +14,7 @@ from radar.taxonomy import (
     ImportSource,
     ImportStatus,
     MessageKind,
+    RemovalStatus,
     SenderRole,
     TranscriptionStatus,
 )
@@ -96,6 +97,36 @@ class MessageOut(BaseModel):
     audio_seconds: float | None
     transcription_status: TranscriptionStatus
     edited: bool
+    #: O autor apagou "para todos" no WhatsApp; o Radar guardou o original.
+    revoked: bool = False
+
+
+class RemovalRequestIn(BaseModel):
+    reason: str = Field(
+        min_length=5,
+        max_length=1000,
+        description="Por que a conversa deveria sair do Radar (ex.: é uma conversa pessoal).",
+    )
+
+
+class RemovalDecisionIn(BaseModel):
+    note: str = Field(default="", max_length=1000)
+    #: Só para conversas do WhatsApp conectado: além de apagar, para de capturar o contato.
+    stop_capturing: bool = True
+
+
+class RemovalRequestOut(BaseModel):
+    id: uuid.UUID
+    conversation_id: uuid.UUID | None
+    conversation_label: str
+    seller: SellerBrief | None
+    requested_by: str
+    reason: str
+    status: RemovalStatus
+    decided_by: str
+    decided_at: datetime | None
+    decision_note: str
+    created_at: datetime
 
 
 class ConversationDetail(ConversationOut):
@@ -105,6 +136,8 @@ class ConversationDetail(ConversationOut):
     #: Nome ou telefone do cliente na origem. Só com ``reveal=true``.
     customer_name: str | None = None
     raw_purged: bool = False
+    #: Pedido de remoção esperando a gestão (``None`` se não há).
+    pending_removal: RemovalRequestOut | None = None
 
 
 class MessageIn(BaseModel):

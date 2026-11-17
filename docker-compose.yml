@@ -4,6 +4,9 @@
 #
 # Painel: http://localhost:3000   (login da demo no README)
 # API:    http://localhost:3000/api/docs
+# Banco:  localhost:5433, banco "radar", usuário "postgres", senha "postgres"
+#
+# O PostgreSQL é o único banco: guarda os dados e também a fila de jobs (tabela job_queue).
 #
 # Funciona sem .env (valores de desenvolvimento). Para produção, copie .env.example para .env
 # e defina pelo menos RADAR_SECRET_KEY e POSTGRES_PASSWORD.
@@ -12,6 +15,8 @@
 #   --profile local   Ollama: LLM 100% local, nada sai da máquina
 #   --profile mail    Mailpit: caixa de e-mail de teste em http://localhost:8025
 #   --profile n8n     N8N: automações em http://localhost:5678
+#   --profile whatsapp  WhatsApp ao vivo: conecta o número de cada vendedor por QR code
+#                       (Evolution API, guardada no mesmo PostgreSQL). Ver o README.
 
 name: radar-vendas
 
@@ -23,9 +28,8 @@ x-backend: &backend
   environment: &backend-env
     RADAR_ENVIRONMENT: ${RADAR_ENVIRONMENT:-dev}
     RADAR_SECRET_KEY: ${RADAR_SECRET_KEY:-dev-inseguro-troque-por-um-segredo-de-32-bytes-ou-mais}
-    RADAR_DATABASE_URL: postgresql+psycopg://radar:${POSTGRES_PASSWORD:-radar}@db:5432/radar
-    RADAR_REDIS_URL: redis://valkey:6379/0
-    RADAR_QUEUE_MODE: rq
+    RADAR_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/radar
+    RADAR_QUEUE_MODE: postgres
     RADAR_PUBLIC_BASE_URL: ${RADAR_PUBLIC_BASE_URL:-http://localhost:3000}
     RADAR_COOKIE_SECURE: ${RADAR_COOKIE_SECURE:-false}
     RADAR_LOG_LEVEL: ${RADAR_LOG_LEVEL:-INFO}
@@ -42,6 +46,7 @@ x-backend: &backend
     RADAR_LLM_PROVIDERS: ${RADAR_LLM_PROVIDERS:-groq,gemini,openrouter,ollama}
     GROQ_API_KEY: ${GROQ_API_KEY:-}
     RADAR_GROQ_MODEL: ${RADAR_GROQ_MODEL:-openai/gpt-oss-120b}
+    RADAR_GROQ_REASONING_EFFORT: ${RADAR_GROQ_REASONING_EFFORT:-low}
     GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     RADAR_GEMINI_MODEL: ${RADAR_GEMINI_MODEL:-gemini-flash-lite-latest}
     OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
@@ -66,6 +71,10 @@ x-backend: &backend
     RADAR_SMTP_STARTTLS: ${RADAR_SMTP_STARTTLS:-true}
     RADAR_TELEGRAM_BOT_TOKEN: ${RADAR_TELEGRAM_BOT_TOKEN:-}
     RADAR_WEBHOOK_ALLOW_PRIVATE_HOSTS: ${RADAR_WEBHOOK_ALLOW_PRIVATE_HOSTS:-false}
+    # WhatsApp ao vivo (perfil whatsapp). Sem o perfil, a página WhatsApp explica como ligar.
+    RADAR_EVOLUTION_URL: ${RADAR_EVOLUTION_URL:-http://evolution:8080}
+    RADAR_EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-troque-esta-chave}
+    RADAR_WHATSAPP_IDLE_MINUTES: ${RADAR_WHATSAPP_IDLE_MINUTES:-30}
   volumes:
     - radar-data:/data
     - hf-cache:/cache/hf
@@ -76,31 +85,20 @@ services:
   db:
     image: pgvector/pgvector:pg17
     restart: unless-stopped
+    # PostgreSQL 17 oficial com a extensão pgvector (usada na busca por similaridade).
     environment:
-      POSTGRES_USER: radar
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-radar}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: radar
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      # Na primeira subida (volume vazio) cria também os bancos radar_test e n8n.
+      - ./docker/postgres/criar-bancos.sql:/docker-entrypoint-initdb.d/criar-bancos.sql:ro
     ports:
       # Só na máquina local, para desenvolvimento. A porta 5433 evita conflito com outro Postgres.
       - "127.0.0.1:${RADAR_DB_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U radar -d radar"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  valkey:
-    image: valkey/valkey:8-alpine
-    restart: unless-stopped
-    command: ["valkey-server", "--save", "60", "1", "--loglevel", "warning"]
-    volumes:
-      - valkey-data:/data
-    ports:
-      - "127.0.0.1:${RADAR_VALKEY_PORT:-6380}:6379"
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d radar"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -131,8 +129,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      valkey:
-        condition: service_healthy
 
   worker:
     <<: *backend
@@ -142,8 +138,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      valkey:
-        condition: service_healthy
 
   scheduler:
     <<: *backend
@@ -153,8 +147,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      valkey:
-        condition: service_healthy
 
   frontend:
     image: radar-vendas-frontend:local
@@ -193,15 +185,82 @@ services:
     environment:
       N8N_SECURE_COOKIE: "false"
       GENERIC_TIMEZONE: America/Sao_Paulo
+      # Os dados do N8N também ficam no PostgreSQL (banco n8n), não no SQLite interno dele.
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: db
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - n8n-data:/home/node/.n8n
     ports:
       - "127.0.0.1:5678:5678"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------- WhatsApp ao vivo
+  # Cria o banco "evolution" no mesmo PostgreSQL (também em instalações que já existiam).
+  evolution-db:
+    profiles: ["whatsapp"]
+    image: pgvector/pgvector:pg17
+    restart: "no"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        psql -h db -U "${POSTGRES_USER:-postgres}" -tAc "SELECT 1 FROM pg_database WHERE datname = 'evolution'" | grep -q 1
+        || psql -h db -U "${POSTGRES_USER:-postgres}" -c "CREATE DATABASE evolution"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Conecta cada número como um "aparelho", igual ao WhatsApp Web. Não é um cliente oficial do
+  # WhatsApp: o número pode ser bloqueado. O Radar só lê (não envia nem marca como lido).
+  evolution:
+    profiles: ["whatsapp"]
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    environment:
+      SERVER_TYPE: http
+      SERVER_PORT: 8080
+      SERVER_URL: http://evolution:8080
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-troque-esta-chave}
+      LANGUAGE: pt-BR
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/evolution?schema=public
+      DATABASE_CONNECTION_CLIENT_NAME: radar
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      # Quem guarda as mensagens é o Radar (texto original cifrado, com retenção); a Evolution
+      # não fica com cópia.
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "false"
+      # Sem Redis: o cache fica na memória do próprio container.
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_LOCAL_ENABLED: "true"
+      TELEMETRY_ENABLED: "false"
+      CONFIG_SESSION_PHONE_CLIENT: Radar de Vendas
+      QRCODE_LIMIT: 30
+      LOG_LEVEL: ERROR,WARN,INFO
+    volumes:
+      - evolution-instances:/evolution/instances
+    ports:
+      # Painel próprio da Evolution em http://localhost:8081/manager (útil para diagnóstico).
+      - "127.0.0.1:${RADAR_EVOLUTION_PORT:-8081}:8080"
+    depends_on:
+      evolution-db:
+        condition: service_completed_successfully
 
 volumes:
-  pgdata:
-  valkey-data:
+  postgres-data:
   radar-data:
   hf-cache:
   ollama:
   n8n-data:
+  evolution-instances:

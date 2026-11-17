@@ -14,6 +14,7 @@ from radar.api.deps import DbDep, SettingsDep, request_meta, require
 from radar.api.errors import BadRequest, Forbidden, NotFound
 from radar.api.paging import paginate
 from radar.api.routers.alerts import alert_out
+from radar.api.routers.removals import removal_views
 from radar.api.schemas.analysis import AnalysisOut, CriterionOut
 from radar.api.schemas.common import Message as MessageResponse
 from radar.api.schemas.common import Page, Pagination, pagination
@@ -44,6 +45,7 @@ from radar.services.ingestion import (
     tenant_timezone,
     to_utc,
 )
+from radar.services.removals import close_pending_on_delete, pending_for
 from radar.taxonomy import ConversationStatus, ImportSource, MessageKind, SenderRole
 from radar.worker.jobs import enqueue_conversation
 
@@ -268,6 +270,9 @@ def get_conversation(
         revealed=reveal,
         customer_name=conversation.customer_name if reveal else None,
         raw_purged=conversation.raw_purged_at is not None,
+        pending_removal=removal_views(db, [pending])[0]
+        if (pending := pending_for(db, conversation.id))
+        else None,
     )
 
 
@@ -331,6 +336,9 @@ def update_conversation(
     conversation = _load(db, principal, conversation_id)
     if principal.is_seller_restricted and (body.seller_id or body.seller_participant):
         raise Forbidden("Só a gestão pode trocar o vendedor de uma conversa.")
+    if principal.is_seller_restricted and body.playbook is not None and body.playbook.strip():
+        # Trocar para um playbook mais brando faria alertas sumirem da própria conversa.
+        raise Forbidden("Só a gestão pode trocar o playbook de uma conversa.")
     tenant = _tenant(db, principal)
     changes: list[str] = []
 
@@ -418,6 +426,7 @@ def delete(
         details={"mensagens": conversation.message_count},
         **request_meta(request),
     )
+    close_pending_on_delete(db, conversation.id, principal)
     delete_conversation(db, conversation, settings)
     db.commit()
     return Response(status_code=204)

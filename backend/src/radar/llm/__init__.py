@@ -29,6 +29,15 @@ __all__ = [
 ]
 
 
+def _extra_body(name: str, model: str, settings: Settings) -> dict[str, object]:
+    """Parâmetros próprios de cada provedor/modelo."""
+    if name == "groq" and "gpt-oss" in model and settings.groq_reasoning_effort:
+        # Com o esforço padrão (medium) o gpt-oss gasta ~1500 tokens raciocinando e o JSON da
+        # análise sai cortado (HTTP 400 json_validate_failed na Groq).
+        return {"reasoning_effort": settings.groq_reasoning_effort}
+    return {}
+
+
 def _providers(settings: Settings) -> dict[str, OpenAICompatibleProvider]:
     timeout = settings.llm_timeout_seconds
     found: dict[str, OpenAICompatibleProvider] = {}
@@ -66,11 +75,14 @@ def _providers(settings: Settings) -> dict[str, OpenAICompatibleProvider]:
                 timeout=timeout,
                 requests_per_minute=rpm,
                 tokens_per_minute=tpm,
+                extra_body=_extra_body(name, model, settings),
             )
     if settings.ollama_base_url:
+        # Aceita o endereço com ou sem "/v1" (a documentação já mostrou os dois).
+        ollama_url = settings.ollama_base_url.rstrip("/").removesuffix("/v1")
         found["ollama"] = OpenAICompatibleProvider(
             name="ollama",
-            base_url=settings.ollama_base_url.rstrip("/") + "/v1",
+            base_url=ollama_url + "/v1",
             api_key="",
             model=settings.ollama_model,
             local=True,
@@ -95,5 +107,9 @@ def build_router(settings: Settings | None = None, mode: Mode | None = None) -> 
         return None
     cache = FileCache(settings.cache_dir / "llm", ttl_seconds=settings.llm_cache_ttl_seconds)
     return LLMRouter(
-        [available[name] for name in order], cache=cache, max_retries=settings.llm_max_retries
+        [available[name] for name in order],
+        cache=cache,
+        max_retries=settings.llm_max_retries,
+        max_tokens=settings.llm_max_output_tokens,
+        throttle_wait_seconds=settings.llm_throttle_wait_seconds,
     )

@@ -70,6 +70,10 @@ class CircuitBreaker:
     def allow(self) -> bool:
         return self._clock() >= self._open_until
 
+    def pause(self, seconds: float) -> None:
+        """Deixa o provedor de lado por ``seconds`` sem contar falha (ex.: 429 com Retry-After)."""
+        self._open_until = max(self._open_until, self._clock() + seconds)
+
     def record_success(self) -> None:
         self._failures = 0
         self._trips = 0

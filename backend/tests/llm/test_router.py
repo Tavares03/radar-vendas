@@ -165,6 +165,75 @@ def test_reparo_local_de_json():
     assert repair_json('texto antes {"a": "b"} texto depois') == {"a": "b"}
 
 
+def test_429_com_retry_after_curto_espera_o_pedido_e_tenta_de_novo():
+    slept: list[float] = []
+    provider = FakeProvider(
+        "a", [ProviderError("HTTP 429", retryable=True, status=429, retry_after=7), OK]
+    )
+    llm = LLMRouter([provider], sleep=slept.append)
+
+    assert llm.complete_json(system="s", user="u", schema=Answer).provider == "a"
+    assert slept == [7]
+
+
+def test_429_com_retry_after_longo_pausa_o_provedor_sem_contar_falha():
+    quota = ProviderError("HTTP 429", retryable=True, status=429, retry_after=3600)
+    limited = FakeProvider("a", [quota])
+    backup = FakeProvider("b", [OK, OK])
+    llm = router(limited, backup)
+
+    assert llm.complete_json(system="s", user="u1", schema=Answer).provider == "b"
+    assert llm.complete_json(system="s", user="u2", schema=Answer).provider == "b"
+    assert len(limited.calls) == 1  # pausado pelo prazo pedido, sem nova tentativa
+
+
+def test_limite_de_taxa_do_radar_nao_abre_o_circuit_breaker():
+    clock = [0.0]
+    busy = FakeProvider("a", [OK])
+    busy.limiter = RateLimiter(
+        requests_per_minute=1, tokens_per_minute=10**6, clock=lambda: clock[0]
+    )
+    busy.limiter.consume(1)
+    backup = FakeProvider("b", [OK] * 3)
+    llm = router(busy, backup, max_wait_seconds=1, throttle_wait_seconds=0, breaker_threshold=1)
+
+    for turn in range(3):
+        assert llm.complete_json(system="s", user=f"u{turn}", schema=Answer).provider == "b"
+    clock[0] += 61  # a janela de um minuto passou
+
+    assert llm.complete_json(system="s", user="u3", schema=Answer).provider == "a"
+
+
+def test_todos_no_limite_de_taxa_espera_o_primeiro_que_liberar():
+    clock = [0.0]
+    slept: list[float] = []
+
+    def sleep(seconds: float) -> None:
+        slept.append(seconds)
+        clock[0] += seconds
+
+    def busy(name: str, used_at: float) -> FakeProvider:
+        provider = FakeProvider(name, [OK])
+        provider.limiter = RateLimiter(
+            requests_per_minute=1, tokens_per_minute=10**6, clock=lambda: clock[0]
+        )
+        clock[0] = used_at
+        provider.limiter.consume(1)
+        return provider
+
+    late, early = busy("a", 30.0), busy("b", 10.0)
+    clock[0] = 31.0
+    llm = LLMRouter([late, early], max_wait_seconds=5, throttle_wait_seconds=65, sleep=sleep)
+
+    result = llm.complete_json(system="s", user="u", schema=Answer)
+
+    assert result.provider == "b"  # libera em 39 s, antes do "a" (59 s)
+    assert slept == [pytest.approx(39.0)]
+    impatient = LLMRouter([busy("c", 31.0)], max_wait_seconds=5, throttle_wait_seconds=0)
+    with pytest.raises(LLMUnavailable, match="limite de taxa"):
+        impatient.complete_json(system="s", user="u", schema=Answer)
+
+
 # ---------------------------------------------------------------- HTTP (OpenAI-compatível)
 def _provider(handler: Callable[[httpx.Request], httpx.Response]) -> OpenAICompatibleProvider:
     return OpenAICompatibleProvider(
@@ -222,7 +291,111 @@ def test_erros_http_viram_erro_de_provedor_com_retry_certo():
         assert caught.value.retryable is retryable, status
 
 
+def test_resposta_cortada_no_limite_de_tokens_nunca_e_aceita_pela_metade():
+    # O gpt-oss com raciocínio "medium" esgotava o teto e o JSON vinha cortado; o reparo local
+    # "consertava" o pedaço e a análise saía sem objeções e pedidos, como se estivesse completa.
+    truncated = '{"nota": 8, "motivo": "bom"} {"objecoes": [{"mensagem": 3'
+    provider = _provider(
+        lambda request: httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": truncated}, "finish_reason": "length"}]},
+        )
+    )
+    with pytest.raises(ProviderError, match="cortada") as caught:
+        provider.chat([{"role": "user", "content": "x"}], max_tokens=100, temperature=0)
+    assert caught.value.retryable is False
+
+
+def test_erro_http_traz_o_motivo_do_provedor_e_o_retry_after():
+    cases = [
+        (
+            400,
+            {"error": {"message": "Failed to generate JSON", "code": "json_validate_failed"}},
+            "HTTP 400 (json_validate_failed)",
+        ),
+        (401, {"error": {"message": "Invalid API Key"}}, "HTTP 401 (Invalid API Key)"),
+        (
+            429,
+            [{"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}}],
+            "HTTP 429 (RESOURCE_EXHAUSTED)",
+        ),
+        (502, None, "HTTP 502"),
+    ]
+    for status, body, expected in cases:
+        provider = _provider(
+            lambda request, s=status, b=body: (
+                httpx.Response(s, json=b, headers={"retry-after": "12"})
+                if b is not None
+                else httpx.Response(s, text="<html>bad gateway</html>")
+            )
+        )
+        with pytest.raises(ProviderError) as caught:
+            provider.chat([{"role": "user", "content": "x"}], max_tokens=10, temperature=0)
+        assert str(caught.value) == expected
+        assert caught.value.retry_after == (12.0 if status == 429 else None)
+
+
+def test_parametros_proprios_do_provedor_vao_no_corpo():
+    seen: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": OK}}]})
+
+    provider = OpenAICompatibleProvider(
+        name="groq",
+        base_url="https://api.exemplo/v1",
+        api_key="chave",
+        model="openai/gpt-oss-120b",
+        extra_body={"reasoning_effort": "low"},
+        http=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    provider.chat([{"role": "user", "content": "x"}], max_tokens=10, temperature=0)
+    assert seen[0]["reasoning_effort"] == "low"
+
+
 # ---------------------------------------------------------------- montagem pela configuração
+def test_groq_gpt_oss_raciocina_pouco_e_os_demais_modelos_nao_recebem_o_parametro():
+    def groq(model: str, effort: str = "low") -> OpenAICompatibleProvider:
+        settings = Settings(
+            _env_file=None,
+            groq_api_key="g",
+            gemini_api_key="m",
+            openrouter_api_key=None,
+            groq_model=model,
+            groq_reasoning_effort=effort,
+        )
+        llm = build_router(settings, "cloud")
+        assert llm is not None
+        assert llm.max_tokens == settings.llm_max_output_tokens
+        return next(p for p in llm.providers if p.name == "groq")  # type: ignore[return-value]
+
+    assert groq("openai/gpt-oss-120b")._extra == {"reasoning_effort": "low"}
+    assert groq("openai/gpt-oss-120b", effort="")._extra == {}
+    assert groq("llama-3.3-70b-versatile")._extra == {}
+
+
+def test_endereco_do_ollama_com_ou_sem_v1():
+    for url in ("http://ollama:11434", "http://ollama:11434/", "http://ollama:11434/v1"):
+        settings = Settings(
+            _env_file=None,
+            groq_api_key=None,
+            gemini_api_key=None,
+            openrouter_api_key=None,
+            ollama_base_url=url,
+        )
+        llm = build_router(settings, "local")
+        assert llm is not None
+        assert llm.providers[0]._url == "http://ollama:11434/v1/chat/completions"  # type: ignore[attr-defined]
+
+
+def test_chave_com_espacos_ou_quebra_de_linha_do_windows_e_limpa():
+    settings = Settings(_env_file=None, groq_api_key="  gsk_abc\r\n", gemini_api_key="  ")
+    assert settings.groq_api_key is not None
+    assert settings.groq_api_key.get_secret_value() == "gsk_abc"
+    assert settings.gemini_api_key is None
+
+
 def test_modos_cloud_local_e_off():
     settings = Settings(
         _env_file=None,

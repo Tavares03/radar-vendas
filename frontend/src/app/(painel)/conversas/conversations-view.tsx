@@ -1,6 +1,6 @@
 "use client";
 
-import { FileArchive, Upload, X } from "lucide-react";
+import { FileArchive, Hourglass, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { type DragEvent, useRef, useState } from "react";
 
@@ -15,10 +15,11 @@ import {
   SelectField,
   SeverityTag,
 } from "@/components/ui";
-import { can, useConversations, useMe, usePlaybooks } from "@/lib/api/hooks";
+import { can, useConversations, useMe, usePlaybooks, useRemovalRequests } from "@/lib/api/hooks";
 import { formatDateTime, plural } from "@/lib/format";
 
 const STATUS: Record<string, string> = {
+  aguardando: "Em andamento",
   pendente: "Na fila",
   processando: "Analisando…",
   analisada: "Analisada",
@@ -176,6 +177,35 @@ function ImportForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+/** Pedidos de remoção esperando a gestão: a decisão é tomada dentro de cada conversa. */
+function PendingRemovals() {
+  const { data } = useRemovalRequests(true);
+  if (!data || data.length === 0) return null;
+  return (
+    <Panel aria-labelledby="pedidos-de-remocao" className="mb-6 border-l-4 border-l-atencao-forte p-5">
+      <h2 id="pedidos-de-remocao" className="flex items-center gap-2 font-bold">
+        <Hourglass aria-hidden size={17} className="text-atencao" />
+        {data.length === 1 ? "1 pedido de remoção esperando você" : `${data.length} pedidos de remoção esperando você`}
+      </h2>
+      <ul className="mt-2 divide-y divide-linha text-sm">
+        {data.map((request) => (
+          <li key={request.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+            <span>
+              <strong>{request.requested_by || "Alguém"}</strong> pediu para tirar{" "}
+              {request.conversation_label}: “{request.reason}”
+            </span>
+            {request.conversation_id ? (
+              <Link href={`/conversas/${request.conversation_id}`} className="font-semibold underline underline-offset-2">
+                Abrir e decidir
+              </Link>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
 export function ConversationsView() {
   const [limit, setLimit] = useState(PAGE);
   const { data: me } = useMe();
@@ -186,6 +216,7 @@ export function ConversationsView() {
   return (
     <>
       <PageTitle title="Conversas" />
+      {can(me, "excluir") ? <PendingRemovals /> : null}
       {canImport ? <ImportForm onDone={() => void mutate()} /> : null}
       {error ? <ErrorNote error={error} /> : null}
       {!data && !error ? <Loading /> : null}
@@ -220,6 +251,14 @@ export function ConversationsView() {
                       <Link href={`/conversas/${conversation.id}`} className="font-semibold hover:underline">
                         {conversation.customer_label}
                       </Link>
+                      {conversation.source === "evolution" ? (
+                        <span
+                          className="ml-2 rounded-full bg-ok-marca px-2 py-0.5 text-xs font-medium text-ok"
+                          title="Chegou pelo WhatsApp conectado"
+                        >
+                          ao vivo
+                        </span>
+                      ) : null}
                       {conversation.role_confidence !== "alta" ? (
                         <span className="ml-2 rounded-full bg-atencao-marca px-2 py-0.5 text-xs font-medium text-atencao">
                           confirmar vendedor

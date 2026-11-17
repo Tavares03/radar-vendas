@@ -93,6 +93,26 @@ def register_stage(name: str, stage: Stage, *, before: str | None = None) -> Non
     STAGES.append((name, stage))
 
 
+def prepare_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
+    """Job leve: transcreve e mascara as mensagens novas, sem analisar nem mudar o status.
+
+    Usado nas conversas ao vivo: o texto aparece mascarado no painel em segundos, e a análise
+    (que gasta cota de LLM) espera a conversa dar uma pausa.
+    """
+    settings = get_settings()
+    with session_scope(tenant_id) as db:
+        conversation = db.get(Conversation, conversation_id)
+        if conversation is None:
+            return
+        for name, stage in (("transcricao", transcribe_stage), ("privacidade", privacy_stage)):
+            try:
+                stage(db, conversation, settings)
+                db.commit()
+            except Exception:
+                db.rollback()
+                log.exception("preparo_falhou", etapa=name, conversation_id=str(conversation_id))
+
+
 def process_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
     """Job: roda todas as etapas para uma conversa."""
     settings = get_settings()
@@ -137,6 +157,13 @@ def process_conversation(conversation_id: uuid.UUID, tenant_id: uuid.UUID) -> No
 
         conversation = db.get(Conversation, conversation_id)
         if conversation is None:
+            return
+        # Uma conversa ao vivo pode ter recebido mensagens durante a análise: ela volta a
+        # "aguardando" para ser analisada de novo na próxima pausa, em vez de passar por pronta.
+        db.refresh(conversation)
+        if conversation.status is ConversationStatus.AGUARDANDO:
+            conversation.updated_at = datetime.now(UTC)
+            db.commit()
             return
         if failed:
             conversation.status = ConversationStatus.ERRO

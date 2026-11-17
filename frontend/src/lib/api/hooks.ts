@@ -93,6 +93,19 @@ export function useAssignees(enabled: boolean) {
   return useSWR(enabled ? "assignees" : null, () => unwrap(api.GET("/api/v1/alerts/assignees")), options);
 }
 
+/** Estado do WhatsApp da equipe; com `refreshMs`, acompanha a leitura do QR code. */
+export function useWhatsApp(refreshMs = 0) {
+  return useSWR("whatsapp", () => unwrap(api.GET("/api/v1/whatsapp")), {
+    ...options,
+    refreshInterval: refreshMs,
+  });
+}
+
+/** Pedidos de remoção pendentes (a gestão vê todos; o vendedor, os próprios). */
+export function useRemovalRequests(enabled: boolean) {
+  return useSWR(enabled ? "removal-requests" : null, () => unwrap(api.GET("/api/v1/removal-requests")), options);
+}
+
 export function usePlaybooks() {
   return useSWR("playbooks", () => unwrap(api.GET("/api/v1/playbooks")), options);
 }
@@ -112,6 +125,8 @@ const PERMISSION = {
   playbooks: "playbooks:write",
   privacidade: "privacy:manage",
   configurar: "settings:manage",
+  excluir: "conversations:delete",
+  whatsapp: "whatsapp:manage",
 } as const;
 
 /** O que o usuário pode fazer, pelas permissões que a própria API informa em `/auth/me`. */

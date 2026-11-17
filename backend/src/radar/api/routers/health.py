@@ -7,11 +7,12 @@ from typing import Any
 
 from fastapi import APIRouter, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from radar import __version__
 from radar.api.deps import DbDep, SettingsDep
 from radar.api.errors import NotFound, ServiceUnavailable, Unauthorized
+from radar.db.models import QueuedJob
 from radar.observability import REGISTRY
 
 router = APIRouter(tags=["saúde"])
@@ -30,7 +31,14 @@ def ready(db: DbDep, settings: SettingsDep) -> dict[str, Any]:
         checks["database"] = "ok"
     except Exception as exc:
         checks["database"] = f"erro: {type(exc).__name__}"
-    if settings.queue_mode == "rq":
+    if settings.queue_mode == "postgres":
+        try:
+            # A fila é uma tabela: confirma que as migrations criaram a job_queue.
+            db.execute(select(QueuedJob.id).limit(1))
+            checks["queue"] = "ok"
+        except Exception as exc:
+            checks["queue"] = f"erro: {type(exc).__name__}"
+    elif settings.queue_mode == "rq":
         try:
             import redis
 

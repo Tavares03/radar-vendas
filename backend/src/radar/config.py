@@ -60,7 +60,9 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------ armazenamento
     database_url: str = "sqlite:///./data/radar.db"
     redis_url: str = "redis://localhost:6379/0"
-    queue_mode: Literal["inline", "rq", "sync"] = "inline"
+    #: inline: thread na API (modo leve); postgres: tabela no banco + ``radar worker`` (Compose);
+    #: rq: Valkey/Redis + ``radar worker``; sync: na hora, na mesma thread (testes).
+    queue_mode: Literal["inline", "postgres", "rq", "sync"] = "inline"
     data_dir: Path = Path("./data")
     models_dir: Path = Path("./models")
     playbooks_dir: Path | None = None
@@ -103,12 +105,20 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     llm_cache_ttl_seconds: int = 7 * 24 * 3600
     llm_max_conversation_tokens: int = 3500
+    #: Teto da resposta. Nos modelos de raciocínio (gpt-oss) o raciocínio também conta aqui.
+    llm_max_output_tokens: int = 2400
+    #: Com todos os provedores no limite de taxa, quanto o worker espera pelo primeiro que liberar
+    #: antes de gravar a análise sem LLM (0 = não espera).
+    llm_throttle_wait_seconds: float = 65.0
 
     groq_api_key: SecretStr | None = Field(default=None, validation_alias=_alias("GROQ_API_KEY"))
     groq_model: str = "openai/gpt-oss-120b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_requests_per_minute: int = 20
     groq_tokens_per_minute: int = 8000
+    #: Só para modelos gpt-oss: low | medium | high (vazio = padrão do provedor, medium). Com
+    #: medium o raciocínio consome quase todo o teto de resposta e o JSON sai cortado.
+    groq_reasoning_effort: str = "low"
 
     gemini_api_key: SecretStr | None = Field(
         default=None, validation_alias=_alias("GEMINI_API_KEY")
@@ -130,6 +140,17 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen3:4b"
     ollama_requests_per_minute: int = 600
     ollama_tokens_per_minute: int = 10_000_000
+
+    # ------------------------------------------------------------ WhatsApp ao vivo (Evolution API)
+    #: Endereço da Evolution API (vazio = integração desligada). No Compose: http://evolution:8080
+    evolution_url: str = ""
+    evolution_api_key: SecretStr | None = None
+    #: Por onde a Evolution alcança esta API para entregar as mensagens (rede interna do Compose).
+    evolution_webhook_base_url: str = "http://api:8000"
+    #: A análise de uma conversa ao vivo roda depois deste tempo sem mensagens novas...
+    whatsapp_idle_minutes: int = Field(default=30, ge=1)
+    #: ...ou, numa conversa que não para, no máximo a cada este intervalo.
+    whatsapp_max_wait_minutes: int = Field(default=180, ge=5)
 
     # ------------------------------------------------------------ notificações
     smtp_host: str = ""
@@ -157,6 +178,17 @@ class Settings(BaseSettings):
     @classmethod
     def _csv(cls, value: object) -> object:
         return _split_csv(value)
+
+    @field_validator(
+        "groq_api_key", "gemini_api_key", "openrouter_api_key", "evolution_api_key", mode="before"
+    )
+    @classmethod
+    def _strip_key(cls, value: object) -> object:
+        # Chave colada de um arquivo do Windows traz "\r" e espaços: viraria um cabeçalho
+        # Authorization inválido, que aparece como "falha de conexão".
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
 
     @model_validator(mode="after")
     def _guard_production(self) -> Settings:

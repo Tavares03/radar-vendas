@@ -98,6 +98,7 @@ def message_views(
                 "audio_seconds": message.media_seconds,
                 "transcription_status": message.transcription_status,
                 "edited": message.edited,
+                "revoked": message.revoked_at is not None,
             }
         )
     return views

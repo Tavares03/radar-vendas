@@ -42,6 +42,10 @@ DEMO_USERS = (
     ("gestor@demo.radar", "Gustavo Gestor", Role.GESTOR),
     ("vendedor@demo.radar", DEMO_SELLER, Role.VENDEDOR),
 )
+#: As contas da demonstração (dados sintéticos, nunca em produção) aceitam senha de qualquer
+#: tamanho em ``RADAR_DEMO_PASSWORD``, para quem quer uma senha fácil no próprio computador. As
+#: demais contas continuam com o mínimo de :data:`radar.auth.passwords.MIN_PASSWORD_LENGTH`.
+DEMO_MIN_PASSWORD_LENGTH = 1
 
 #: Carimbo de data do export do Android em português: ``31/12/2026 08:15 - ``.
 _STAMP = re.compile(r"^(\d{2})/(\d{2})/(\d{4})(?= \d{2}:\d{2} - )", re.MULTILINE)
@@ -122,7 +126,13 @@ def seed_demo(
         db.flush()
         for email, name, role in DEMO_USERS:
             user = create_user(
-                db, tenant_id=tenant.id, email=email, name=name, role=role, password=password
+                db,
+                tenant_id=tenant.id,
+                email=email,
+                name=name,
+                role=role,
+                password=password,
+                min_length=DEMO_MIN_PASSWORD_LENGTH,
             )
             if role is Role.VENDEDOR and name in sellers:
                 user.seller_id = sellers[name].id

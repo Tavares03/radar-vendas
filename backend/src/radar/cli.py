@@ -117,7 +117,9 @@ def seed_demo_cmd(
     password: Annotated[
         str,
         typer.Option(
-            prompt=True, hide_input=True, help="Senha dos usuários da demonstração (10+ caracteres)"
+            prompt=True,
+            hide_input=True,
+            help="Senha dos usuários da demonstração (qualquer tamanho)",
         ),
     ] = "",
 ) -> None:
@@ -179,13 +181,13 @@ def bootstrap() -> None:
 def worker(
     burst: Annotated[bool, typer.Option(help="Processa o que houver na fila e encerra")] = False,
 ) -> None:
-    """Sobe um worker que consome a fila de jobs (exige RADAR_QUEUE_MODE=rq)."""
+    """Sobe um worker que consome a fila de jobs (RADAR_QUEUE_MODE=postgres ou rq)."""
     from radar.worker.runner import run_worker
 
-    if get_settings().queue_mode != "rq":
+    if get_settings().queue_mode not in ("postgres", "rq"):
         typer.secho(
-            "O worker só é necessário com RADAR_QUEUE_MODE=rq. Nos modos inline e sync os jobs "
-            "rodam dentro da própria API.",
+            "O worker só é necessário com RADAR_QUEUE_MODE=postgres ou rq. Nos modos inline e "
+            "sync os jobs rodam dentro da própria API.",
             fg=typer.colors.YELLOW,
             err=True,
         )

@@ -71,7 +71,8 @@ limitaria o upload de exports grandes.
 
 ## D11 — Portas 5433 e 6380 no host
 **Motivo:** 5432 e 6379 costumam estar ocupadas por outro Postgres/Redis na máquina de quem
-desenvolve. Dentro da rede do Compose as portas continuam as padrões.
+desenvolve. Dentro da rede do Compose as portas continuam as padrões. (A 6380 era do Valkey, que
+saiu do Compose em D52.)
 
 ## D12 — Licenças
 **Decisão:** Apache-2.0 para código e modelos; CC BY 4.0 para o dataset sintético.
@@ -352,6 +353,10 @@ vem de `RADAR_DEMO_PASSWORD`; sem ela, é sorteada e aparece uma vez no log. Nun
 **Motivo:** a variável existia e não fazia nada, e `docker compose up` terminava num painel sem
 dados e sem login. Senha fixa e pública é o tipo de coisa que acaba exposta numa instalação
 esquecida; sortear e mostrar no log dá o mesmo "um comando" sem deixar credencial conhecida.
+**Detalhe:** quem quer uma senha fácil no próprio computador escolhe em `RADAR_DEMO_PASSWORD`, e
+as contas da demonstração aceitam qualquer tamanho (ex.: `123456`). Antes, uma senha com menos
+de 10 caracteres fazia a carga falhar e a demonstração sumia, só com um aviso no log. O padrão
+continua sorteado, e as demais contas (e a troca de senha pelo painel) mantêm o mínimo de 10.
 
 ## D49 — A tendência semanal não depende do período escolhido
 **Decisão:** `GET /api/v1/overview` devolve sempre as oito semanas até a conversa mais recente,
@@ -388,3 +393,79 @@ funciona: com 0,7 os riscos apontados pelo modelo acertam 91% no teste, ao custo
 (59% para 35%) e de cinco rótulos desligados, que continuam cobertos pelas regras do playbook e
 pelo LLM. Para uma ferramenta de compliance, alerta falso custa mais do que alerta que só as
 regras pegam.
+
+## D52 — No Compose, o PostgreSQL é o único banco (fila incluída)
+**Decisão:** novo modo de fila `RADAR_QUEUE_MODE=postgres`, padrão do Docker Compose: os jobs
+ficam na tabela `job_queue` e o `radar worker` pega o próximo com `SELECT … FOR UPDATE SKIP
+LOCKED`. O Valkey saiu do Compose; o modo `rq` continua no código para quem preferir. Usuário e
+senha do banco no Compose passam a ser `postgres`/`postgres`, e o N8N opcional também guarda os
+dados no PostgreSQL (banco `n8n`), em vez do SQLite interno.
+**Alternativas:** manter o Valkey; usar o modo `inline` no Compose (sem worker); adotar uma
+biblioteca de fila sobre PostgreSQL (procrastinate, pgqueuer).
+**Motivo:** um banco a menos para operar, fazer backup e entender, e é o banco que quem instala
+já conhece. O volume de jobs do Radar (uma importação e uma análise por conversa, mais duas
+tarefas periódicas) é pequeno para o PostgreSQL. O modo `inline` tiraria o worker separado: os
+modelos e o Whisper passariam a rodar dentro da API e os jobs se perderiam num reinício. Uma
+biblioteca nova traria API e esquema próprios para cobrir o pouco que o projeto usava do RQ.
+**Detalhe:** o que vinha do RQ continua: deduplicação por `job_id`, atraso, retentativas (30 s,
+2 min, 10 min), timeout por `SIGALRM` com o job na thread principal (o mesmo `SimpleWorker` sem
+fork, ver D09), limpeza dos concluídos (1 h) e falhos (7 dias). Um job de worker morto no meio
+volta para a fila depois do timeout; com SIGTERM (`docker compose stop`) o worker interrompe o
+job e o devolve na hora, sem contar tentativa. O limite de requisições da API volta a ser em
+memória, o que é exato com um processo de API só, como no Compose.
+
+## D53 — Limite de taxa é espera, não falha; resposta cortada é falha
+**Decisão:** quando o limitador do próprio Radar manda esperar mais do que 20 s num provedor, o
+roteador passa ao próximo sem contar falha no circuit breaker. Se todos estão só no limite, o
+worker espera o primeiro que liberar (até 65 s) em vez de gravar a análise sem LLM. Um 429 com
+`Retry-After` longo pausa aquele provedor pelo prazo pedido. Resposta com
+`finish_reason=length` é recusada sem tentar consertar. Na Groq, os modelos gpt-oss recebem
+`reasoning_effort=low` e o teto de resposta sobe de 1800 para 2400 tokens.
+**Alternativas:** subir os limites configurados (estourariam a cota real: a Groq desconta parte
+do `max_tokens` pedido já na requisição); reenfileirar a conversa mais tarde; manter o
+raciocínio padrão e aumentar só o teto.
+**Motivo:** medido com as 45 conversas da demonstração e chaves reais. Antes, o limitador abria
+o circuit breaker da Groq e do Gemini em menos de um minuto e 35 conversas ficaram sem LLM; a
+análise roda em segundo plano, então esperar meio minuto custa pouco e uma análise sem LLM não é
+refeita sozinha. Com o raciocínio padrão, o gpt-oss-120b gastava ~1500 dos 1800 tokens pensando:
+3 de 4 conversas longas voltavam com HTTP 400 `json_validate_failed` e a quarta vinha cortada,
+"consertada" pelo reparo local e gravada sem objeções e pedidos. Com `low`, as quatro voltaram
+completas, com 300 a 500 tokens de raciocínio e mais rápido.
+
+## D54 — WhatsApp ao vivo pela Evolution API, só leitura e no mesmo PostgreSQL
+**Decisão:** perfil `whatsapp` do Compose com a Evolution API 2.3.7, que conecta cada número como
+um "aparelho" (igual ao WhatsApp Web) e manda os eventos para um webhook do Radar com segredo no
+endereço (derivado de `RADAR_SECRET_KEY`, fora do OpenAPI). A instância é criada só para ler:
+grupos ignorados, sem marcar como lido, sem ficar online, sem importar o histórico. A sessão fica
+no PostgreSQL (banco `evolution`) e a Evolution não guarda cópia das mensagens
+(`DATABASE_SAVE_DATA_NEW_MESSAGE=false`): quem guarda é o Radar, com o texto original cifrado e a
+retenção de sempre. Áudio é baixado na hora pelo próprio Radar (o link do WhatsApp expira), sem
+`base64` no webhook (vídeos grandes estourariam o corpo). Cada mensagem dispara um preparo leve
+(transcrição + máscara) e a conversa fica `aguardando`; a análise com LLM roda depois de
+`RADAR_WHATSAPP_IDLE_MINUTES` sem mensagens (ou a cada `RADAR_WHATSAPP_MAX_WAIT_MINUTES` numa
+conversa que não para).
+**Alternativas:** WhatsApp Cloud API oficial com coexistência (exige conta Business verificada e
+cadastro pela Meta); export manual apenas; analisar a cada mensagem.
+**Motivo:** é o "conectar e pronto" que a equipe usa no dia a dia, funciona com WhatsApp comum e
+Business e não exige cadastro na Meta. O risco é real e está documentado no README e no painel: a
+Evolution não é cliente oficial e o número pode ser bloqueado; ler sem enviar reduz, mas não
+zera. Analisar a cada mensagem esgotaria a cota grátis de LLM (a da Groq dá ~70 análises por
+dia). `fromMe` diz quem falou, então a identificação do vendedor é sempre "alta".
+**Detalhe:** o telefone do cliente não aparece em claro na chave da conversa
+(`wa:<conexão>:<HMAC do contato>`); o nome da instância é um hash do vendedor. Validado contra a
+Evolution real: QR, registro do webhook e entrega do evento de conexão ao Radar; uma instância que
+nunca existiu responde 404 na consulta de estado (e uma recém-apagada, 200 sem `state`).
+
+## D55 — O vendedor pede a remoção; só a gestão apaga
+**Decisão:** o vendedor não exclui conversa (já não podia) e passa a ter um pedido de remoção com
+motivo. A gestão aprova (apaga a conversa e, se veio do WhatsApp conectado, para de capturar o
+contato, guardando só o HMAC dele) ou recusa. Pedido e decisão ficam guardados e na auditoria;
+excluir direto pela gestão fecha o pedido pendente. Junto, fecham-se outros jeitos de esconder
+conversa ruim: o vendedor não troca mais o playbook da própria conversa, mensagem apagada "para
+todos" continua no Radar marcada como apagada (com aviso na conversa quando foi o vendedor),
+edição guarda o original, e desconectar o número fica registrado e visível para a gestão (só ela
+desconecta pelo painel).
+**Alternativas:** deixar o vendedor apagar com auditoria; não permitir remoção nenhuma.
+**Motivo:** com o número inteiro conectado, conversas pessoais vão entrar; o vendedor precisa de um
+caminho para tirá-las, mas, se apagasse sozinho, poderia esconder justamente as conversas com
+problema. A auditoria depois do fato não devolve a conversa apagada.

@@ -75,6 +75,13 @@ docker compose up --build
 
 - Painel: <http://localhost:3000>
 - Documentação da API (OpenAPI): <http://localhost:3000/api/docs>
+- Banco (PostgreSQL 17 + pgvector): `localhost:5433`, banco `radar`, usuário `postgres`, senha
+  `postgres` — dá para abrir no DBeaver, pgAdmin ou `psql`
+
+O PostgreSQL é o único banco da instalação: guarda os dados e também a fila de jobs que o worker
+consome. O Compose sobe o banco, aplica as migrations, e então a API, o worker, o agendador e o
+painel. Para parar: `docker compose down` (os dados ficam no volume); para apagar tudo e começar
+do zero: `docker compose down -v`.
 
 Para criar a sua empresa e o primeiro administrador, copie `.env.example` para `.env` e preencha
 `RADAR_BOOTSTRAP_TENANT_NAME`, `RADAR_BOOTSTRAP_ADMIN_EMAIL` e `RADAR_BOOTSTRAP_ADMIN_PASSWORD`
@@ -97,8 +104,9 @@ e aparece uma vez no log da API:
 docker compose logs api | grep demonstracao_criada
 ```
 
-Para escolher a senha, defina `RADAR_DEMO_PASSWORD` (10 caracteres ou mais) no `.env` antes de
-subir. Para não carregar a demonstração, `RADAR_SEED_DEMO=false`. Ela nunca é criada com
+Para escolher a senha, defina `RADAR_DEMO_PASSWORD` no `.env` antes de subir (qualquer tamanho,
+por exemplo `123456`: a regra de 10 caracteres vale para as contas de verdade, não para a
+demonstração). Para não carregar a demonstração, `RADAR_SEED_DEMO=false`. Ela nunca é criada com
 `RADAR_ENVIRONMENT=prod`, nem quando você configura o seu próprio administrador. Numa instalação
 que já tem usuários, dá para carregá-la à mão:
 
@@ -148,6 +156,36 @@ risco em cada setor está nos [playbooks](docs/PLAYBOOKS.md), editáveis sem pro
 
 Sistemas próprios (CRM, N8N) podem mandar conversas em JSON para `POST /api/v1/conversations`.
 Os tokens de integração são criados em `POST /api/v1/api-tokens`.
+
+### WhatsApp ao vivo (conectar por QR code)
+
+Em vez de exportar conversa por conversa, cada vendedor pode conectar o próprio número uma vez,
+como no WhatsApp Web, e as conversas chegam sozinhas:
+
+```bash
+docker compose --profile whatsapp up -d
+```
+
+No painel, abra **WhatsApp** → **Conectar** e leia o QR code no celular (*WhatsApp → Aparelhos
+conectados → Conectar um aparelho*). A conexão usa a [Evolution API](https://github.com/EvolutionAPI/evolution-api),
+que sobe junto e guarda a sessão no mesmo PostgreSQL (banco `evolution`).
+
+- **Recomendado: WhatsApp Business, com um número só de trabalho.** Tudo o que chega no número
+  conectado entra no Radar, inclusive conversas pessoais se o número também for usado para isso.
+  Grupos, status e canais ficam de fora.
+- **O vendedor não apaga conversa.** Ele pede a remoção (com motivo) na própria conversa e a
+  gestão aprova ou recusa; aprovar apaga a conversa e para de capturar aquele contato. Enquanto
+  isso, a conversa continua visível e analisada. Mensagem apagada "para todos" no WhatsApp fica no
+  Radar, marcada como apagada; mensagem editada guarda o original; desconectar o número aparece
+  para a gestão.
+- O texto aparece mascarado no painel em segundos; a **análise com LLM espera a conversa dar uma
+  pausa** (`RADAR_WHATSAPP_IDLE_MINUTES`, padrão 30) para não gastar cota a cada mensagem.
+- Só entram as mensagens a partir da conexão; o histórico antigo continua entrando pelo export.
+- O Radar só lê: não envia mensagens nem marca nada como lido.
+
+> ⚠️ A Evolution API usa o protocolo do WhatsApp Web sem ser um cliente oficial. Isso vai contra
+> os termos do WhatsApp e **o número pode ser bloqueado**. O risco é menor para quem só lê, mas
+> não é zero. O caminho oficial (WhatsApp Cloud API) está no plano.
 
 ### Chaves de LLM (opcionais e gratuitas)
 
@@ -208,10 +246,10 @@ Para rodar os testes também em PostgreSQL (como a CI faz):
 
 ```bash
 docker compose up -d db
-RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_test uv run pytest
+RADAR_TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:5433/radar_test uv run pytest
 ```
 
-(crie o banco `radar_test` uma vez: `docker compose exec db createdb -U radar radar_test`)
+(o banco `radar_test` é criado sozinho na primeira subida do `db`)
 
 ## Estrutura
 
@@ -237,7 +275,8 @@ RADAR_TEST_DATABASE_URL=postgresql+psycopg://radar:radar@127.0.0.1:5433/radar_te
 | Painel: visão geral, fila de alertas, conversa com evidências, vendedores, playbooks, configurações | pronto |
 | Modelos próprios treinados e avaliados (`pii-ner-ptbr`, `sales-intent-ptbr`), servidos em ONNX na CPU | pronto, ainda não publicados no Hugging Face |
 | Demo pública no Hugging Face Spaces e avaliação do sistema inteiro na CI | a fazer |
-| Alertas por e-mail, Telegram e webhook; webhooks de saída; exemplo para N8N; espelho do WhatsApp Cloud API e da Evolution API | a fazer |
+| WhatsApp ao vivo por QR code (Evolution API), com remoção de conversa só com aprovação da gestão | pronto |
+| Alertas por e-mail, Telegram e webhook; webhooks de saída; exemplo para N8N; WhatsApp Cloud API oficial | a fazer |
 | Coach do vendedor, biblioteca de boas respostas, insights da equipe, busca em linguagem natural e relatórios em PDF | a fazer |
 
 O plano completo, fase por fase, está em [docs/PLANO.md](docs/PLANO.md).

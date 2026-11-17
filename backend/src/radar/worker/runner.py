@@ -18,10 +18,19 @@ log = get_logger(__name__)
 
 def run_worker(*, burst: bool = False) -> None:
     """Consome a fila. Os jobs rodam neste mesmo processo para os modelos ficarem em memória."""
-    from rq import SimpleWorker
-
     settings = get_settings()
     init_storage(settings)
+
+    if settings.queue_mode == "postgres":
+        from radar.worker.pg_queue import PostgresWorker
+
+        log.info("worker_iniciado", queue="postgres", burst=burst)
+        handled = PostgresWorker().run(burst=burst)
+        log.info("worker_encerrado", jobs=handled)
+        return
+
+    from rq import SimpleWorker
+
     worker = SimpleWorker([get_queue()], connection=get_redis())
     log.info("worker_iniciado", queue=QUEUE_NAME, burst=burst)
     worker.work(burst=burst, with_scheduler=True, logging_level=settings.log_level)

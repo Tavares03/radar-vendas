@@ -28,6 +28,7 @@ relato é creditado no `CHANGELOG.md`, se você quiser.
 
 - defina `RADAR_SECRET_KEY` (32+ caracteres) e `POSTGRES_PASSWORD` próprios;
 - use `RADAR_ENVIRONMENT=prod` e `RADAR_COOKIE_SECURE=true` atrás de HTTPS;
-- não exponha as portas do banco, do Valkey e da API diretamente à internet — só o painel;
+- não exponha as portas do banco, da API e da Evolution API diretamente à internet — só o painel;
+- com o WhatsApp conectado, defina um `EVOLUTION_API_KEY` próprio;
 - mantenha `RADAR_ALLOW_SIGNUP=false` se a instalação é de uma empresa só;
 - revise a política de retenção em Configurações → Privacidade.
